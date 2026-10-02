@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AD DAFFODILS INVOICE GENERATOR</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- html2pdf.js for PDF Generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f1f5f9;
+    }
+    
+    /* Exact Invoice Sheet Styling */
+    .invoice-sheet {
+      background-color: #F2EDE4;
+      color: #2B2B2B;
+      width: 100%;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 32px;
+      border-radius: 4px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+      position: relative;
+    }
+
+    .badge-route {
+      background-color: #E8D3C3;
+      color: #2B2B2B;
+      padding: 6px 24px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 1rem;
+      display: inline-block;
+    }
+
+    .table-dark-header {
+      background-color: #3C3C3C;
+      color: #ffffff;
+    }
+
+    .border-custom {
+      border-color: #D3C9BC;
+    }
+
+    /* Hide form controls during print */
+    @media print {
+      .no-print {
+        display: none !important;
+      }
+      body {
+        background-color: #fff;
+        padding: 0;
+      }
+      .invoice-sheet {
+        box-shadow: none;
+        padding: 20px;
+        max-width: 100%;
+      }
+    }
+  </style>
+</head>
+<body class="p-4 md:p-8">
+
+<div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
+  
+  <!-- LEFT COLUMN: INPUT FORM CONTROLS -->
+  <div class="lg:col-span-5 bg-white p-6 rounded-xl shadow-sm border border-slate-200 h-fit no-print">
+    <div class="flex items-center justify-between mb-6 pb-3 border-b border-slate-100">
+      <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+        <span>⚙️</span> Invoice Data Controls
+      </h2>
+      <span class="text-xs bg-amber-100 text-amber-800 font-semibold px-2.5 py-1 rounded-full">Live Preview</span>
+    </div>
+
+    <div class="space-y-4 text-sm">
+      
+      <!-- Route & Meta -->
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block font-semibold text-slate-600 mb-1">Route Title</label>
+          <input type="text" id="in_route" value="UK To Malaysia" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-amber-500 focus:outline-none" oninput="updateInvoice()">
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-600 mb-1">Invoice Number</label>
+          <input type="text" id="in_invNum" value="LDUM0977" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-amber-500 focus:outline-none" oninput="updateInvoice()">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block font-semibold text-slate-600 mb-1">Departure Date</label>
+          <input type="text" id="in_depDate" value="01 / Oct / 2026" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-amber-500 focus:outline-none" oninput="updateInvoice()">
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-600 mb-1">Est. Arrival Date</label>
+          <input type="text" id="in_arrDate" value="28 / Oct / 2026" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-amber-500 focus:outline-none" oninput="updateInvoice()">
+        </div>
+      </div>
+
+      <!-- Shipper Details -->
+      <div class="pt-2 border-t border-slate-100">
+        <h3 class="font-bold text-slate-700 mb-2 text-xs uppercase tracking-wider">Shipper Details</h3>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs text-slate-500 mb-1">Name</label>
+            <input type="text" id="in_shipName" value="Thu Ta Soe" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-amber-500 focus:outline-none" oninput="updateInvoice()">
+          </div>
+          <div>
+            <label class="block text-xs text-slate-500 mb-1">Phone</label>
+            <input type="text" id="in_shipPhone" value="07557036551" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-amber-500 focus:outline-none" oninput="updateInvoice()">
+          </div>
+        </div>
+      </div>
+
+      <!-- Receiver Details -->
+      <div class="pt-2 border-t border-slate-100">
+        <h3 class="font-bold text-slate-700 mb-2 text-xs uppercase tracking-wider">Receiver Details</h3>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs text-slate-500 mb-1">Name</label>
+            <input type="text" id="in_recName" value="Khine Wah Wah Ko" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-amber-500 focus:outline-none" oninput="updateInvoice()">
+          </div>
+          <div>
+            <label class="block text-xs text-slate-500 mb-1">Phone</label>
+            <input type="text" id="in_recPhone" value="095944421991" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-amber-500 focus:outline-none" oninput="updateInvoice()">
+          </div>
+        </div>
+      </div>
+
+      <!-- Dynamic Item List -->
+      <div class="pt-2 border-t border-slate-100">
+        <div class="flex justify-between items-center mb-2">
+          <h3 class="font-bold text-slate-700 text-xs uppercase tracking-wider">Consignment Items</h3>
+          <button onclick="addItem()" class="text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-2.5 py-1 rounded-md transition duration-150">
+            + Add Package
+          </button>
+        </div>
+        
+        <div id="itemInputsContainer" class="space-y-2 max-h-60 overflow-y-auto pr-1">
+          <!-- Dynamic Items inserted via JS -->
+        </div>
+      </div>
+
+      <div class="pt-4 border-t border-slate-200 flex flex-col gap-2">
+        <button onclick="downloadPDF()" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 rounded-lg shadow-sm transition duration-150 flex items-center justify-center gap-2">
+          <span>📄</span> Download Invoice PDF / Print
+        </button>
+        <button onclick="exportExcel()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-semibold py-2.5 rounded-lg transition duration-150 flex items-center justify-center gap-2">
+          <span>📊</span> Export Data to Excel (.CSV)
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- RIGHT COLUMN: LIVE PRINTABLE INVOICE PREVIEW -->
+  <div class="lg:col-span-7 flex justify-center">
+    
+    <div id="invoiceArea" class="invoice-sheet">
+      
+      <!-- Invoice Header -->
+      <div class="flex justify-between items-start mb-6">
+        <!-- Logo & Branding -->
+        <div class="flex flex-col items-start">
+          <div class="flex items-center gap-3 mb-1">
+            <div class="w-14 h-14 rounded-full border-2 border-amber-600 bg-white flex items-center justify-center font-black text-amber-600 text-xl shadow-sm">
+              AD
+            </div>
+          </div>
+          <div class="font-black text-2xl tracking-tight text-slate-800 leading-none mt-1">
+            AD DAFFODILS
+          </div>
+          <div class="bg-slate-900 text-white font-bold text-[10px] tracking-widest px-2 py-0.5 rounded-full mt-1">
+            CONSIGNMENT
+          </div>
+        </div>
+
+        <!-- Route & Meta Info -->
+        <div class="text-right">
+          <div id="out_route" class="badge-route mb-3">
+            UK To Malaysia
+          </div>
+          <div class="text-xs space-y-1 font-medium text-slate-700">
+            <div>Invoice Number : <span id="out_invNum" class="font-bold">LDUM0977</span></div>
+            <div>Departure Date : <span id="out_depDate">01 / Oct / 2026</span></div>
+            <div>Est. Arrival : <span id="out_arrDate">28 / Oct / 2026</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Shipper & Receiver Grid -->
+      <div class="grid grid-cols-2 gap-6 mb-6">
+        <!-- Shipper Box -->
+        <div>
+          <h4 class="font-bold text-sm border-b border-slate-700 pb-1 mb-2 text-slate-800">Shipper Details</h4>
+          <div class="text-xs space-y-1">
+            <div><span class="text-slate-600">Name :</span> <span id="out_shipName" class="font-semibold">Thu Ta Soe</span></div>
+            <div><span class="text-slate-600">Phone :</span> <span id="out_shipPhone">07557036551</span></div>
+          </div>
+        </div>
+
+        <!-- Receiver Box -->
+        <div>
+          <h4 class="font-bold text-sm border-b border-slate-700 pb-1 mb-2 text-slate-800">Receiver Details</h4>
+          <div class="text-xs space-y-1">
+            <div><span class="text-slate-600">Name :</span> <span id="out_recName" class="font-semibold">Khine Wah Wah Ko</span></div>
+            <div><span class="text-slate-600">Phone :</span> <span id="out_recPhone">095944421991</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Consignment Table -->
+      <div class="mb-6 overflow-hidden">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead>
+            <tr class="table-dark-header">
+              <th class="py-2.5 px-3 font-semibold">Item Description</th>
+              <th class="py-2.5 px-3 font-semibold">Actual Wt.</th>
+              <th class="py-2.5 px-3 font-semibold">Dimensions (cm)</th>
+              <th class="py-2.5 px-3 font-semibold">Charge Wt.</th>
+            </tr>
+          </thead>
+          <tbody id="out_itemsBody" class="divide-y divide-stone-300">
+            <!-- Dynamic Rows -->
+          </tbody>
+          <tfoot>
+            <tr class="border-t-2 border-b-2 border-slate-800 font-bold text-xs">
+              <td id="out_totalPackages" class="py-3 px-3">TOTAL (5 Packages)</td>
+              <td id="out_totalActual" class="py-3 px-3">34.55 kg</td>
+              <td class="py-3 px-3"></td>
+              <td id="out_totalCharge" class="py-3 px-3">38.40 kg</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <!-- Payment Method -->
+      <div class="mb-8 text-xs space-y-1">
+        <h5 class="font-bold tracking-wider text-slate-900 mb-1.5 uppercase">Payment Method</h5>
+        <div><span class="text-slate-600">ACCOUNT TYPE :</span> <span class="font-semibold">BUSINESS</span></div>
+        <div><span class="text-slate-600">ACCOUNT NAME :</span> <span class="font-semibold">AD DAFFODILS CONSIGNMENT</span></div>
+        <div><span class="text-slate-600">SORT CODE :</span> <span class="font-semibold">82-19-74</span></div>
+        <div><span class="text-slate-600">ACCOUNT NUMBER :</span> <span class="font-semibold">40256654</span></div>
+      </div>
+
+      <!-- Footer -->
+      <div class="pt-4 border-t border-custom flex justify-between items-end text-[11px] text-slate-600 leading-snug">
+        <div>
+          <div class="font-medium">Thank You For Using Our Service!</div>
+          <div>Phone: +44 7861 489456</div>
+        </div>
+        <div class="text-right max-w-[240px]">
+          79 Oval Road North, Dagenham, London RM10 9ET, UK
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+  // Initial Package Data
+  let items = [
+    { desc: 'Box - 1', actual: 5.80, dim: '31 x 29 x 49', charge: 7.00 },
+    { desc: 'Box - 2', actual: 6.75, dim: '31 x 29 x 49', charge: 7.00 },
+    { desc: 'Box - 3', actual: 5.90, dim: '31 x 29 x 49', charge: 7.00 },
+    { desc: 'Box - 4', actual: 10.40, dim: '31 x 29 x 49', charge: 10.40 },
+    { desc: 'Box - 5', actual: 5.70, dim: '31 x 29 x 49', charge: 7.00 }
+  ];
+
+  // Render Input Controls for Package Items
+  function renderItemInputs() {
+    const container = document.getElementById('itemInputsContainer');
+    container.innerHTML = '';
+
+    items.forEach((item, index) => {
+      const row = document.createElement('div');
+      row.className = 'grid grid-cols-12 gap-1.5 items-center bg-slate-50 p-2 rounded-md border border-slate-200 text-xs';
+      row.innerHTML = `
+        <div class="col-span-4">
+          <input type="text" value="${item.desc}" placeholder="Desc" class="w-full border border-slate-300 rounded px-1.5 py-1" oninput="updateItem(${index}, 'desc', this.value)">
+        </div>
+        <div class="col-span-2">
+          <input type="number" step="0.01" value="${item.actual}" placeholder="Act" class="w-full border border-slate-300 rounded px-1 py-1" oninput="updateItem(${index}, 'actual', parseFloat(this.value) || 0)">
+        </div>
+        <div class="col-span-3">
+          <input type="text" value="${item.dim}" placeholder="Dim" class="w-full border border-slate-300 rounded px-1 py-1" oninput="updateItem(${index}, 'dim', this.value)">
+        </div>
+        <div class="col-span-2">
+          <input type="number" step="0.01" value="${item.charge}" placeholder="Chg" class="w-full border border-slate-300 rounded px-1 py-1" oninput="updateItem(${index}, 'charge', parseFloat(this.value) || 0)">
+        </div>
+        <div class="col-span-1 text-right">
+          <button onclick="removeItem(${index})" class="text-rose-600 hover:text-rose-800 font-bold px-1">✕</button>
+        </div>
+      `;
+      container.appendChild(row);
+    });
+  }
+
+  function updateItem(index, field, value) {
+    items[index][field] = value;
+    updateInvoice();
+  }
+
+  function addItem() {
+    items.push({
+      desc: `Box - ${items.length + 1}`,
+      actual: 0.00,
+      dim: '31 x 29 x 49',
+      charge: 0.00
+    });
+    renderItemInputs();
+    updateInvoice();
+  }
+
+  function removeItem(index) {
+    if (items.length > 1) {
+      items.splice(index, 1);
+      renderItemInputs();
+      updateInvoice();
+    }
+  }
+
+  // Live Update Invoice Sheet
+  function updateInvoice() {
+    // Text Metadata
+    document.getElementById('out_route').innerText = document.getElementById('in_route').value || 'UK To Malaysia';
+    document.getElementById('out_invNum').innerText = document.getElementById('in_invNum').value || '';
+    document.getElementById('out_depDate').innerText = document.getElementById('in_depDate').value || '';
+    document.getElementById('out_arrDate').innerText = document.getElementById('in_arrDate').value || '';
+    
+    // Shipper / Receiver
+    document.getElementById('out_shipName').innerText = document.getElementById('in_shipName').value || '';
+    document.getElementById('out_shipPhone').innerText = document.getElementById('in_shipPhone').value || '';
+    document.getElementById('out_recName').innerText = document.getElementById('in_recName').value || '';
+    document.getElementById('out_recPhone').innerText = document.getElementById('in_recPhone').value || '';
+
+    // Render Table Rows & Totals
+    const tbody = document.getElementById('out_itemsBody');
+    tbody.innerHTML = '';
+
+    let totalActual = 0;
+    let totalCharge = 0;
+
+    items.forEach(item => {
+      totalActual += Number(item.actual) || 0;
+      totalCharge += Number(item.charge) || 0;
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="py-2 px-3">${item.desc}</td>
+        <td class="py-2 px-3">${Number(item.actual).toFixed(2)} kg</td>
+        <td class="py-2 px-3">${item.dim}</td>
+        <td class="py-2 px-3">${Number(item.charge).toFixed(2)} kg</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    document.getElementById('out_totalPackages').innerText = `TOTAL (${items.length} Packages)`;
+    document.getElementById('out_totalActual').innerText = `${totalActual.toFixed(2)} kg`;
+    document.getElementById('out_totalCharge').innerText = `${totalCharge.toFixed(2)} kg`;
+  }
+
+  // Download PDF functionality
+  function downloadPDF() {
+    const element = document.getElementById('invoiceArea');
+    const invNum = document.getElementById('in_invNum').value || 'Invoice';
+    
+    const opt = {
+      margin:       [0.2, 0.2, 0.2, 0.2],
+      filename:     `${invNum}_AD_Daffodils.pdf`,
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2, useCORS: true },
+      jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+    };
+
+    html2pdf().set(opt).from(element).save();
+  }
+
+  // Export to Excel / CSV Functionality
+  function exportExcel() {
+    const invNum = document.getElementById('in_invNum').value || 'Invoice';
+    let csv = `Invoice Number,${invNum}\nRoute,${document.getElementById('in_route').value}\n\n`;
+    csv += `Shipper Name,${document.getElementById('in_shipName').value}\nShipper Phone,${document.getElementById('in_shipPhone').value}\n\n`;
+    csv += `Receiver Name,${document.getElementById('in_recName').value}\nReceiver Phone,${document.getElementById('in_recPhone').value}\n\n`;
+    csv += `Item Description,Actual Wt (kg),Dimensions,Charge Wt (kg)\n`;
+
+    items.forEach(item => {
+      csv += `"${item.desc}",${item.actual},"${item.dim}",${item.charge}\n`;
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${invNum}_Data.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  // Initial Load
+  window.onload = function() {
+    renderItemInputs();
+    updateInvoice();
+  };
+</script>
+
+</body>
+</html>
