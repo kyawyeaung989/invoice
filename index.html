@@ -301,17 +301,32 @@ let packages = [
 ];
 
 function init() {
+  loadSavedLogo();
   renderPackageInputs();
   updateInvoice();
 }
 
-// Logo File Handler
+// Load logo from localStorage if available
+function loadSavedLogo() {
+  const savedLogo = localStorage.getItem('ad_daffodils_custom_logo');
+  if (savedLogo) {
+    document.getElementById('viewLogoImg').src = savedLogo;
+  }
+}
+
+// Logo File Handler with LocalStorage Persistence
 function handleLogoUpload(event) {
   const file = event.target.files[0];
   if (file) {
     const reader = new FileReader();
     reader.onload = function(e) {
-      document.getElementById('viewLogoImg').src = e.target.result;
+      const base64Image = e.target.result;
+      document.getElementById('viewLogoImg').src = base64Image;
+      try {
+        localStorage.setItem('ad_daffodils_custom_logo', base64Image);
+      } catch (err) {
+        console.warn('Could not save logo to localStorage:', err);
+      }
     };
     reader.readAsDataURL(file);
   }
