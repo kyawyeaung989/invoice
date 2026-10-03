@@ -5,10 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AD DAFFODILS INVOICE GENERATOR</title>
 
+<!-- Tailwind CSS & PDF/Canvas Export Libraries -->
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
 <style>
   * {
@@ -48,6 +49,19 @@
     border-bottom: 1px solid #E2DCD0;
   }
 
+  /* Custom Typography Logo Styling */
+  .styled-text-logo {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border: 2px solid #fbbf24;
+    border-radius: 12px;
+    padding: 10px 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
   /* Print Media Rules */
   @media print {
     body {
@@ -81,6 +95,7 @@
 </head>
 <body class="p-2 md:p-6 min-h-screen">
 
+<!-- Top Action Header -->
 <div class="max-w-[1280px] mx-auto mb-4 flex flex-wrap justify-between items-center bg-slate-800 p-4 rounded-xl gap-3 no-print border border-slate-700 shadow-lg">
   <div class="flex items-center gap-3">
     <div class="bg-amber-500 text-slate-950 p-2 rounded-lg font-black text-xl tracking-wider">AD</div>
@@ -111,12 +126,19 @@
       <span class="text-xs font-normal text-slate-400">Live Auto-Update</span>
     </h2>
 
+    <!-- Logo Upload & Reset Controls -->
     <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-700/80 space-y-2">
-      <label class="block text-xs font-bold text-amber-400">1. Company Logo Upload</label>
+      <div class="flex items-center justify-between">
+        <label class="block text-xs font-bold text-amber-400">1. Company Logo</label>
+        <button id="resetLogoBtn" onclick="clearLogo()" class="text-[11px] bg-slate-800 hover:bg-rose-950 text-rose-300 hover:text-rose-200 border border-slate-700 hover:border-rose-800 px-2 py-0.5 rounded-lg transition hidden">
+          🗑️ Clear / Reset Logo
+        </button>
+      </div>
       <input type="file" id="logoFileInput" accept="image/*" onchange="handleLogoUpload(event)" class="text-xs text-slate-300 w-full file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-amber-500 file:text-slate-950 hover:file:bg-amber-400 cursor-pointer">
-      <p class="text-[11px] text-slate-400">Upload custom logo image or leave default logo.</p>
+      <p class="text-[11px] text-slate-400 leading-normal">Logo images are saved permanently in IndexedDB. If no logo is selected, the styled text header will display.</p>
     </div>
 
+    <!-- Invoice Metadata -->
     <div class="space-y-3 pt-1">
       <div class="font-bold text-xs text-amber-400 uppercase tracking-wider">2. Invoice Metadata</div>
       <div class="grid grid-cols-2 gap-2.5">
@@ -139,6 +161,7 @@
       </div>
     </div>
 
+    <!-- Shipper & Receiver -->
     <div class="space-y-3 pt-2 border-t border-slate-700">
       <div class="font-bold text-xs text-amber-400 uppercase tracking-wider">3. Shipper & Receiver</div>
       <div class="space-y-2">
@@ -158,6 +181,7 @@
       </div>
     </div>
 
+    <!-- Dynamic Packages List -->
     <div class="pt-2 border-t border-slate-700 space-y-3">
       <div class="flex justify-between items-center">
         <span class="font-bold text-xs text-amber-400 uppercase tracking-wider">4. Consignment Packages</span>
@@ -174,12 +198,12 @@
       </div>
 
       <div id="packagesInputs" class="space-y-2.5">
-        <!-- Dynamic Package Control Cards Injected Here -->
+        <!-- Dynamic Package Cards -->
       </div>
     </div>
   </div>
 
-  <!-- RIGHT COLUMN: Live Print-Ready A4 Invoice Preview -->
+  <!-- RIGHT COLUMN: Live Print-Ready A4 Invoice Sheet Preview -->
   <div class="lg:col-span-7 flex justify-center items-start overflow-x-auto p-2">
     <div id="invoiceContainer">
       <div id="invoice" class="invoice-sheet text-xs">
@@ -187,8 +211,19 @@
         <!-- HEADER SECTION -->
         <div>
           <div class="flex justify-between items-start pb-3 border-b-2 border-stone-300">
-            <div class="w-52 h-20 flex items-center justify-start overflow-hidden">
-              <img id="viewLogoImg" src="https://images2.imgbox.com/39/2e/S3LAnzYJ_o.png" alt="AD DAFFODILS Logo" class="max-w-full max-h-full object-contain">
+            
+            <!-- Dual Mode Header Logo Block -->
+            <div id="logoHeaderBlock" class="min-w-[210px] min-h-[70px] flex items-center justify-start">
+              <!-- Image Logo Container -->
+              <div id="imageLogoWrapper" class="hidden w-52 h-20 flex items-center justify-start overflow-hidden">
+                <img id="viewLogoImg" src="" alt="AD DAFFODILS Logo" class="max-w-full max-h-full object-contain">
+              </div>
+
+              <!-- Styled Typography Badge Logo Container (Default Fallback) -->
+              <div id="textLogoWrapper" class="styled-text-logo">
+                <div class="text-amber-400 font-black text-xl tracking-wider uppercase leading-none">AD DAFFODILS</div>
+                <div class="text-slate-300 font-bold text-[9px] tracking-widest uppercase mt-1">Cargo & Consignment Logistics</div>
+              </div>
             </div>
 
             <div class="text-right leading-tight">
@@ -230,7 +265,7 @@
               </tr>
             </thead>
             <tbody id="viewTableBody">
-              <!-- JS Injected Consignment Rows -->
+              <!-- JS Injected Rows -->
             </tbody>
             <tfoot>
               <tr class="font-extrabold text-stone-900 border-t-2 border-stone-400 text-xs">
@@ -291,7 +326,7 @@
 <script>
 let showDimensions = true;
 
-// Initial state data matching consignment defaults
+// Default Consignment Packages State
 let packages = [
   { desc: 'Box - 1', act: 5.80, l: 31, w: 29, h: 49, chg: 7.00 },
   { desc: 'Box - 2', act: 6.75, l: 31, w: 29, h: 49, chg: 7.00 },
@@ -300,36 +335,121 @@ let packages = [
   { desc: 'Box - 5', act: 5.70, l: 31, w: 29, h: 49, chg: 7.00 }
 ];
 
-function init() {
-  loadSavedLogo();
+// IndexedDB Helper for Large Persistent Storage (Guarantees image doesn't get cleared on refresh)
+const DB_NAME = 'ADDaffodilsInvoiceDB';
+const DB_VERSION = 1;
+const STORE_NAME = 'assets';
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+    request.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME);
+      }
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function saveLogoToDB(dataUrl) {
+  try {
+    const db = await openDB();
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    const store = tx.objectStore(STORE_NAME);
+    store.put(dataUrl, 'companyLogo');
+    await tx.complete;
+  } catch (err) {
+    console.error('Failed to save logo in IndexedDB:', err);
+  }
+}
+
+async function getLogoFromDB() {
+  try {
+    const db = await openDB();
+    return new Promise((resolve) => {
+      const tx = db.transaction(STORE_NAME, 'readonly');
+      const store = tx.objectStore(STORE_NAME);
+      const req = store.get('companyLogo');
+      req.onsuccess = () => resolve(req.result || null);
+      req.onerror = () => resolve(null);
+    });
+  } catch (err) {
+    return null;
+  }
+}
+
+async function deleteLogoFromDB() {
+  try {
+    const db = await openDB();
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    const store = tx.objectStore(STORE_NAME);
+    store.delete('companyLogo');
+  } catch (err) {
+    console.error('Failed to remove logo from IndexedDB:', err);
+  }
+}
+
+async function init() {
+  await loadSavedLogo();
   renderPackageInputs();
   updateInvoice();
 }
 
-// Load logo from localStorage if available
-function loadSavedLogo() {
-  const savedLogo = localStorage.getItem('ad_daffodils_custom_logo');
+// Load logo from IndexedDB or fallback to styled text header
+async function loadSavedLogo() {
+  const savedLogo = await getLogoFromDB();
   if (savedLogo) {
-    document.getElementById('viewLogoImg').src = savedLogo;
+    displayImageLogo(savedLogo);
+  } else {
+    displayTextLogo();
   }
 }
 
-// Logo File Handler with LocalStorage Persistence
-function handleLogoUpload(event) {
+function displayImageLogo(dataUrl) {
+  const viewImg = document.getElementById('viewLogoImg');
+  const imgWrapper = document.getElementById('imageLogoWrapper');
+  const textWrapper = document.getElementById('textLogoWrapper');
+  const resetBtn = document.getElementById('resetLogoBtn');
+
+  viewImg.src = dataUrl;
+  imgWrapper.classList.remove('hidden');
+  textWrapper.classList.add('hidden');
+  resetBtn.classList.remove('hidden');
+}
+
+function displayTextLogo() {
+  const imgWrapper = document.getElementById('imageLogoWrapper');
+  const textWrapper = document.getElementById('textLogoWrapper');
+  const resetBtn = document.getElementById('resetLogoBtn');
+  const fileInput = document.getElementById('logoFileInput');
+
+  imgWrapper.classList.add('hidden');
+  textWrapper.classList.remove('hidden');
+  resetBtn.classList.add('hidden');
+  if (fileInput) fileInput.value = '';
+}
+
+// Handle Custom Logo Upload
+async function handleLogoUpload(event) {
   const file = event.target.files[0];
   if (file) {
     const reader = new FileReader();
-    reader.onload = function(e) {
+    reader.onload = async function(e) {
       const base64Image = e.target.result;
-      document.getElementById('viewLogoImg').src = base64Image;
-      try {
-        localStorage.setItem('ad_daffodils_custom_logo', base64Image);
-      } catch (err) {
-        console.warn('Could not save logo to localStorage:', err);
-      }
+      displayImageLogo(base64Image);
+      await saveLogoToDB(base64Image);
     };
     reader.readAsDataURL(file);
   }
+}
+
+// Clear Logo & Revert to Styled Typography Header
+async function clearLogo() {
+  await deleteLogoFromDB();
+  displayTextLogo();
 }
 
 // Render Input Forms for Packages with 0.1 Charge Weight Steppers
