@@ -3,21 +3,25 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AD DAFFODILS INVOICE GENERATOR</title>
+  <title>AD DAFFODILS CONSIGNMENT - Invoice Generator V2</title>
+
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- html2pdf.js for PDF Generation -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <!-- html2canvas for JPEG Image Export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  
+
   <style>
     body {
       font-family: 'Inter', sans-serif;
-      background-color: #f1f5f9;
+      background-color: #0f172a;
+      color: #334155;
     }
-    
-    /* Exact Invoice Sheet Styling */
+
+    /* Print/Export Sheet Canvas Styling */
     .invoice-sheet {
       background-color: #F2EDE4;
       color: #2B2B2B;
@@ -25,18 +29,18 @@
       max-width: 800px;
       margin: 0 auto;
       padding: 32px;
-      border-radius: 4px;
-      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+      border-radius: 6px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
       position: relative;
     }
 
     .badge-route {
       background-color: #E8D3C3;
       color: #2B2B2B;
-      padding: 6px 24px;
+      padding: 6px 20px;
       border-radius: 12px;
       font-weight: 700;
-      font-size: 1rem;
+      font-size: 0.95rem;
       display: inline-block;
     }
 
@@ -49,13 +53,13 @@
       border-color: #D3C9BC;
     }
 
-    /* Hide form controls during print */
+    /* Hide Controls When Printing */
     @media print {
       .no-print {
         display: none !important;
       }
       body {
-        background-color: #fff;
+        background-color: #ffffff;
         padding: 0;
       }
       .invoice-sheet {
@@ -66,123 +70,158 @@
     }
   </style>
 </head>
-<body class="p-4 md:p-8">
+<body class="p-4 md:p-8 min-h-screen">
 
 <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
   
-  <!-- LEFT COLUMN: INPUT FORM CONTROLS -->
-  <div class="lg:col-span-5 bg-white p-6 rounded-xl shadow-sm border border-slate-200 h-fit no-print">
-    <div class="flex items-center justify-between mb-6 pb-3 border-b border-slate-100">
-      <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
-        <span>⚙️</span> Invoice Data Controls
-      </h2>
-      <span class="text-xs bg-amber-100 text-amber-800 font-semibold px-2.5 py-1 rounded-full">Live Preview</span>
+  <!-- LEFT COLUMN: CONTROL PANEL -->
+  <div class="lg:col-span-5 bg-slate-900 p-6 rounded-2xl shadow-xl border border-slate-800 text-slate-200 h-fit no-print space-y-5">
+    
+    <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+      <div>
+        <h2 class="text-lg font-bold text-amber-400 flex items-center gap-2">
+          <span>⚡</span> AD DAFFODILS Controls
+        </h2>
+        <p class="text-xs text-slate-400">Invoice Generator Version 2.0</p>
+      </div>
+      <span class="text-[10px] bg-emerald-500/20 text-emerald-400 font-bold px-2.5 py-1 rounded-full border border-emerald-500/30">Auto-Save On</span>
     </div>
 
-    <div class="space-y-4 text-sm">
-      
-      <!-- Route & Meta -->
+    <!-- Mode Toggle: Dimension vs KG Only -->
+    <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700/60">
+      <label class="block text-xs font-bold text-slate-300 mb-2 uppercase tracking-wider">Calculation Mode</label>
+      <div class="grid grid-cols-2 gap-2">
+        <button id="btnModeDim" onclick="setMode('dim')" class="py-2 text-xs font-bold rounded-lg transition duration-150 bg-amber-500 text-slate-950 shadow-md">
+          📏 Dimension Mode
+        </button>
+        <button id="btnModeKg" onclick="setMode('kg')" class="py-2 text-xs font-bold rounded-lg transition duration-150 bg-slate-700 text-slate-300 hover:bg-slate-600">
+          ⚖️ KG Only Mode
+        </button>
+      </div>
+    </div>
+
+    <!-- Invoice Header Metadata -->
+    <div class="space-y-3 text-xs">
       <div class="grid grid-cols-2 gap-3">
         <div>
-          <label class="block font-semibold text-slate-600 mb-1">Route Title</label>
-          <input type="text" id="in_route" value="UK To Malaysia" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-amber-500 focus:outline-none" oninput="updateInvoice()">
+          <label class="block font-semibold text-slate-400 mb-1">Route Title</label>
+          <input type="text" id="in_route" value="UK To Malaysia" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-white focus:ring-2 focus:ring-amber-500 focus:outline-none" oninput="handleInput()">
         </div>
         <div>
-          <label class="block font-semibold text-slate-600 mb-1">Invoice Number</label>
-          <input type="text" id="in_invNum" value="LDUM0977" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-amber-500 focus:outline-none" oninput="updateInvoice()">
+          <label class="block font-semibold text-slate-400 mb-1">Invoice Number</label>
+          <input type="text" id="in_invNum" value="LDUM0977" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-white focus:ring-2 focus:ring-amber-500 focus:outline-none" oninput="handleInput()">
         </div>
       </div>
 
       <div class="grid grid-cols-2 gap-3">
         <div>
-          <label class="block font-semibold text-slate-600 mb-1">Departure Date</label>
-          <input type="text" id="in_depDate" value="01 / Oct / 2026" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-amber-500 focus:outline-none" oninput="updateInvoice()">
+          <label class="block font-semibold text-slate-400 mb-1">Departure Date</label>
+          <input type="text" id="in_depDate" value="01 / Oct / 2026" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-white focus:ring-2 focus:ring-amber-500 focus:outline-none" oninput="handleInput()">
         </div>
         <div>
-          <label class="block font-semibold text-slate-600 mb-1">Est. Arrival Date</label>
-          <input type="text" id="in_arrDate" value="28 / Oct / 2026" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-amber-500 focus:outline-none" oninput="updateInvoice()">
+          <label class="block font-semibold text-slate-400 mb-1">Est. Arrival Date</label>
+          <input type="text" id="in_arrDate" value="28 / Oct / 2026" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-white focus:ring-2 focus:ring-amber-500 focus:outline-none" oninput="handleInput()">
         </div>
       </div>
+    </div>
 
-      <!-- Shipper Details -->
-      <div class="pt-2 border-t border-slate-100">
-        <h3 class="font-bold text-slate-700 mb-2 text-xs uppercase tracking-wider">Shipper Details</h3>
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs text-slate-500 mb-1">Name</label>
-            <input type="text" id="in_shipName" value="Thu Ta Soe" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-amber-500 focus:outline-none" oninput="updateInvoice()">
-          </div>
-          <div>
-            <label class="block text-xs text-slate-500 mb-1">Phone</label>
-            <input type="text" id="in_shipPhone" value="07557036551" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-amber-500 focus:outline-none" oninput="updateInvoice()">
-          </div>
-        </div>
+    <!-- Shipper Details -->
+    <div class="pt-2 border-t border-slate-800 space-y-2">
+      <h3 class="font-bold text-amber-400 text-xs uppercase tracking-wider">Shipper Details</h3>
+      <div class="grid grid-cols-2 gap-3 text-xs">
+        <input type="text" id="in_shipName" value="Thu Ta Soe" placeholder="Name" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-white focus:outline-none" oninput="handleInput()">
+        <input type="text" id="in_shipPhone" value="07557036551" placeholder="Phone" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-white focus:outline-none" oninput="handleInput()">
       </div>
+    </div>
 
-      <!-- Receiver Details -->
-      <div class="pt-2 border-t border-slate-100">
-        <h3 class="font-bold text-slate-700 mb-2 text-xs uppercase tracking-wider">Receiver Details</h3>
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs text-slate-500 mb-1">Name</label>
-            <input type="text" id="in_recName" value="Khine Wah Wah Ko" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-amber-500 focus:outline-none" oninput="updateInvoice()">
-          </div>
-          <div>
-            <label class="block text-xs text-slate-500 mb-1">Phone</label>
-            <input type="text" id="in_recPhone" value="095944421991" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-amber-500 focus:outline-none" oninput="updateInvoice()">
-          </div>
-        </div>
+    <!-- Receiver Details -->
+    <div class="pt-2 border-t border-slate-800 space-y-2">
+      <h3 class="font-bold text-amber-400 text-xs uppercase tracking-wider">Receiver Details</h3>
+      <div class="grid grid-cols-2 gap-3 text-xs">
+        <input type="text" id="in_recName" value="Khine Wah Wah Ko" placeholder="Name" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-white focus:outline-none" oninput="handleInput()">
+        <input type="text" id="in_recPhone" value="095944421991" placeholder="Phone" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-white focus:outline-none" oninput="handleInput()">
       </div>
+    </div>
 
-      <!-- Dynamic Item List -->
-      <div class="pt-2 border-t border-slate-100">
-        <div class="flex justify-between items-center mb-2">
-          <h3 class="font-bold text-slate-700 text-xs uppercase tracking-wider">Consignment Items</h3>
-          <button onclick="addItem()" class="text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-2.5 py-1 rounded-md transition duration-150">
-            + Add Package
+    <!-- Package Item Controls with Volumetric Divider & Up/Down Steppers -->
+    <div class="pt-2 border-t border-slate-800">
+      <div class="flex justify-between items-center mb-3">
+        <h3 class="font-bold text-amber-400 text-xs uppercase tracking-wider">Consignment Packages</h3>
+        <div class="flex gap-2">
+          <!-- Volumetric Divider Selector -->
+          <div id="volDivContainer" class="flex items-center bg-slate-800 rounded-lg px-2 py-0.5 border border-slate-700 text-[11px]">
+            <span class="text-slate-400 mr-1.5">Div:</span>
+            <label class="mr-2 cursor-pointer text-slate-200"><input type="radio" name="volDiv" value="5000" checked onchange="handleInput()"> /5000</label>
+            <label class="cursor-pointer text-slate-200"><input type="radio" name="volDiv" value="6000" onchange="handleInput()"> /6000</label>
+          </div>
+          <button onclick="addItem()" class="text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-2.5 py-1 rounded-md transition duration-150">
+            + Package
           </button>
         </div>
-        
-        <div id="itemInputsContainer" class="space-y-2 max-h-60 overflow-y-auto pr-1">
-          <!-- Dynamic Items inserted via JS -->
-        </div>
       </div>
-
-      <div class="pt-4 border-t border-slate-200 flex flex-col gap-2">
-        <button onclick="downloadPDF()" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 rounded-lg shadow-sm transition duration-150 flex items-center justify-center gap-2">
-          <span>📄</span> Download Invoice PDF / Print
-        </button>
-        <button onclick="exportExcel()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-semibold py-2.5 rounded-lg transition duration-150 flex items-center justify-center gap-2">
-          <span>📊</span> Export Data to Excel (.CSV)
-        </button>
+      
+      <div id="itemInputsContainer" class="space-y-3 max-h-72 overflow-y-auto pr-1">
+        <!-- Dynamic Package Item Rows Inserted Via JS -->
       </div>
-
     </div>
+
+    <!-- Export Action Buttons -->
+    <div class="pt-4 border-t border-slate-800 space-y-2">
+      <div class="grid grid-cols-2 gap-2">
+        <button onclick="downloadPDF()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-3 rounded-xl shadow-lg transition duration-150 flex items-center justify-center gap-1.5 text-xs">
+          <span>📄</span> Download PDF
+        </button>
+        <button onclick="downloadJPEG()" class="w-full bg-teal-600 hover:bg-teal-500 text-white font-bold py-3 rounded-xl shadow-lg transition duration-150 flex items-center justify-center gap-1.5 text-xs">
+          <span>🖼️</span> Export JPEG Image
+        </button>
+      </div>
+      <button onclick="resetData()" class="w-full bg-slate-800 hover:bg-rose-950/50 text-slate-400 hover:text-rose-400 font-medium py-2 rounded-lg text-xs transition duration-150 border border-slate-700">
+        ↻ Reset To Default Sample Data
+      </button>
+    </div>
+
   </div>
 
-  <!-- RIGHT COLUMN: LIVE PRINTABLE INVOICE PREVIEW -->
-  <div class="lg:col-span-7 flex justify-center">
+  <!-- RIGHT COLUMN: LIVE PREVIEW CANVAS SHEET -->
+  <div class="lg:col-span-7 flex justify-center items-start">
     
     <div id="invoiceArea" class="invoice-sheet">
       
       <!-- Invoice Header -->
       <div class="flex justify-between items-start mb-6">
-        <!-- Logo & Branding -->
+        
+        <!-- Logo & Branding (Transparent SVG/CSS Logo - No Black Background) -->
         <div class="flex flex-col items-start">
           <div class="flex items-center gap-3 mb-1">
-            <div class="w-14 h-14 rounded-full border-2 border-amber-600 bg-white flex items-center justify-center font-black text-amber-600 text-xl shadow-sm">
-              AD
+            <svg width="65" height="65" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <!-- Transparent SVG Graphic representing Planet & Orbit Arrow in Gold/Dark Scheme -->
+              <circle cx="50" cy="50" r="30" fill="url(#goldGrad)" />
+              <!-- Orbit Path -->
+              <ellipse cx="50" cy="50" rx="42" ry="16" stroke="#2B2B2B" stroke-width="4" transform="rotate(-25 50 50)"/>
+              <!-- Arrow Head -->
+              <path d="M82 30 L94 22 L86 38 Z" fill="#2B2B2B" />
+              <!-- Globe Lines -->
+              <path d="M30 45 C40 40 60 40 70 45" stroke="#ffffff" stroke-width="2" opacity="0.6"/>
+              <path d="M25 55 C35 62 65 62 75 55" stroke="#ffffff" stroke-width="2" opacity="0.6"/>
+              <defs>
+                <linearGradient id="goldGrad" x1="20" y1="20" x2="80" y2="80" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#E5C158"/>
+                  <stop offset="1" stop-color="#A87B18"/>
+                </linearGradient>
+              </defs>
+            </svg>
+            <div>
+              <div class="font-black text-2xl tracking-tight text-slate-900 leading-none">
+                AD DAFFODILS
+              </div>
+              <div class="bg-slate-900 text-amber-400 font-bold text-[10px] tracking-widest px-2.5 py-0.5 rounded-full inline-block mt-1">
+                CONSIGNMENT
+              </div>
             </div>
-          </div>
-          <div class="font-black text-2xl tracking-tight text-slate-800 leading-none mt-1">
-            AD DAFFODILS
-          </div>
-          <div class="bg-slate-900 text-white font-bold text-[10px] tracking-widest px-2 py-0.5 rounded-full mt-1">
-            CONSIGNMENT
           </div>
         </div>
 
-        <!-- Route & Meta Info -->
+        <!-- Route & Meta Badge Info -->
         <div class="text-right">
           <div id="out_route" class="badge-route mb-3">
             UK To Malaysia
@@ -198,62 +237,64 @@
       <!-- Shipper & Receiver Grid -->
       <div class="grid grid-cols-2 gap-6 mb-6">
         <!-- Shipper Box -->
-        <div>
-          <h4 class="font-bold text-sm border-b border-slate-700 pb-1 mb-2 text-slate-800">Shipper Details</h4>
+        <div class="bg-stone-200/50 p-3 rounded-lg border border-stone-300/60">
+          <h4 class="font-bold text-xs uppercase border-b border-stone-400 pb-1 mb-2 text-slate-900">Shipper Details</h4>
           <div class="text-xs space-y-1">
-            <div><span class="text-slate-600">Name :</span> <span id="out_shipName" class="font-semibold">Thu Ta Soe</span></div>
-            <div><span class="text-slate-600">Phone :</span> <span id="out_shipPhone">07557036551</span></div>
+            <div><span class="text-stone-600">Name :</span> <span id="out_shipName" class="font-bold text-slate-900">Thu Ta Soe</span></div>
+            <div><span class="text-stone-600">Phone :</span> <span id="out_shipPhone" class="font-medium">07557036551</span></div>
           </div>
         </div>
 
         <!-- Receiver Box -->
-        <div>
-          <h4 class="font-bold text-sm border-b border-slate-700 pb-1 mb-2 text-slate-800">Receiver Details</h4>
+        <div class="bg-stone-200/50 p-3 rounded-lg border border-stone-300/60">
+          <h4 class="font-bold text-xs uppercase border-b border-stone-400 pb-1 mb-2 text-slate-900">Receiver Details</h4>
           <div class="text-xs space-y-1">
-            <div><span class="text-slate-600">Name :</span> <span id="out_recName" class="font-semibold">Khine Wah Wah Ko</span></div>
-            <div><span class="text-slate-600">Phone :</span> <span id="out_recPhone">095944421991</span></div>
+            <div><span class="text-stone-600">Name :</span> <span id="out_recName" class="font-bold text-slate-900">Khine Wah Wah Ko</span></div>
+            <div><span class="text-stone-600">Phone :</span> <span id="out_recPhone" class="font-medium">095944421991</span></div>
           </div>
         </div>
       </div>
 
-      <!-- Consignment Table -->
+      <!-- Consignment Items Table -->
       <div class="mb-6 overflow-hidden">
         <table class="w-full text-left border-collapse text-xs">
           <thead>
             <tr class="table-dark-header">
               <th class="py-2.5 px-3 font-semibold">Item Description</th>
               <th class="py-2.5 px-3 font-semibold">Actual Wt.</th>
-              <th class="py-2.5 px-3 font-semibold">Dimensions (cm)</th>
-              <th class="py-2.5 px-3 font-semibold">Charge Wt.</th>
+              <th id="th_dim" class="py-2.5 px-3 font-semibold">Dimensions (cm)</th>
+              <th class="py-2.5 px-3 font-semibold text-right">Charge Wt.</th>
             </tr>
           </thead>
           <tbody id="out_itemsBody" class="divide-y divide-stone-300">
-            <!-- Dynamic Rows -->
+            <!-- Dynamic Table Rows -->
           </tbody>
           <tfoot>
-            <tr class="border-t-2 border-b-2 border-slate-800 font-bold text-xs">
+            <tr class="border-t-2 border-b-2 border-slate-900 font-bold text-xs bg-stone-200/40">
               <td id="out_totalPackages" class="py-3 px-3">TOTAL (5 Packages)</td>
               <td id="out_totalActual" class="py-3 px-3">34.55 kg</td>
-              <td class="py-3 px-3"></td>
-              <td id="out_totalCharge" class="py-3 px-3">38.40 kg</td>
+              <td id="td_totalDimSpace" class="py-3 px-3"></td>
+              <td id="out_totalCharge" class="py-3 px-3 text-right">38.40 kg</td>
             </tr>
           </tfoot>
         </table>
       </div>
 
       <!-- Payment Method -->
-      <div class="mb-8 text-xs space-y-1">
-        <h5 class="font-bold tracking-wider text-slate-900 mb-1.5 uppercase">Payment Method</h5>
-        <div><span class="text-slate-600">ACCOUNT TYPE :</span> <span class="font-semibold">BUSINESS</span></div>
-        <div><span class="text-slate-600">ACCOUNT NAME :</span> <span class="font-semibold">AD DAFFODILS CONSIGNMENT</span></div>
-        <div><span class="text-slate-600">SORT CODE :</span> <span class="font-semibold">82-19-74</span></div>
-        <div><span class="text-slate-600">ACCOUNT NUMBER :</span> <span class="font-semibold">40256654</span></div>
+      <div class="mb-8 text-xs space-y-1 bg-stone-200/30 p-3 rounded-lg border border-stone-300/40">
+        <h5 class="font-bold tracking-wider text-slate-900 mb-1.5 uppercase text-[11px]">Payment Method</h5>
+        <div class="grid grid-cols-2 gap-2 text-[11px]">
+          <div><span class="text-stone-600">ACCOUNT TYPE :</span> <span class="font-semibold">BUSINESS</span></div>
+          <div><span class="text-stone-600">ACCOUNT NAME :</span> <span class="font-semibold">AD DAFFODILS CONSIGNMENT</span></div>
+          <div><span class="text-stone-600">SORT CODE :</span> <span class="font-semibold">82-19-74</span></div>
+          <div><span class="text-stone-600">ACCOUNT NUMBER :</span> <span class="font-semibold">40256654</span></div>
+        </div>
       </div>
 
       <!-- Footer -->
       <div class="pt-4 border-t border-custom flex justify-between items-end text-[11px] text-slate-600 leading-snug">
         <div>
-          <div class="font-medium">Thank You For Using Our Service!</div>
+          <div class="font-bold text-slate-800">Thank You For Using Our Service!</div>
           <div>Phone: +44 7861 489456</div>
         </div>
         <div class="text-right max-w-[240px]">
@@ -268,42 +309,160 @@
 </div>
 
 <script>
-  // Initial Package Data
-  let items = [
-    { desc: 'Box - 1', actual: 5.80, dim: '31 x 29 x 49', charge: 7.00 },
-    { desc: 'Box - 2', actual: 6.75, dim: '31 x 29 x 49', charge: 7.00 },
-    { desc: 'Box - 3', actual: 5.90, dim: '31 x 29 x 49', charge: 7.00 },
-    { desc: 'Box - 4', actual: 10.40, dim: '31 x 29 x 49', charge: 10.40 },
-    { desc: 'Box - 5', actual: 5.70, dim: '31 x 29 x 49', charge: 7.00 }
+  // Initial / Default Sample Data
+  const defaultItems = [
+    { desc: 'Box - 1', actual: 5.80, dimL: 31, dimW: 29, dimH: 49, charge: 7.00 },
+    { desc: 'Box - 2', actual: 6.75, dimL: 31, dimW: 29, dimH: 49, charge: 7.00 },
+    { desc: 'Box - 3', actual: 5.90, dimL: 31, dimW: 29, dimH: 49, charge: 7.00 },
+    { desc: 'Box - 4', actual: 10.40, dimL: 31, dimW: 29, dimH: 49, charge: 10.40 },
+    { desc: 'Box - 5', actual: 5.70, dimL: 31, dimW: 29, dimH: 49, charge: 7.00 }
   ];
 
-  // Render Input Controls for Package Items
+  let currentMode = 'dim'; // 'dim' or 'kg'
+  let items = [];
+
+  // Load Saved Data from LocalStorage (Idea 5) or Fallback to Defaults
+  function initData() {
+    const savedItems = localStorage.getItem('addaffodils_v2_items');
+    const savedMode = localStorage.getItem('addaffodils_v2_mode');
+
+    if (savedItems) {
+      try { items = JSON.parse(savedItems); } catch(e) { items = [...defaultItems]; }
+    } else {
+      items = JSON.parse(JSON.stringify(defaultItems));
+    }
+
+    if (savedMode) currentMode = savedMode;
+
+    // Load Metadata fields if saved
+    ['route', 'invNum', 'depDate', 'arrDate', 'shipName', 'shipPhone', 'recName', 'recPhone'].forEach(field => {
+      const savedVal = localStorage.getItem(`addaffodils_v2_${field}`);
+      if (savedVal !== null) {
+        const inputElem = document.getElementById(`in_${field}`);
+        if (inputElem) inputElem.value = savedVal;
+      }
+    });
+
+    setMode(currentMode, false);
+    renderItemInputs();
+    updateInvoice();
+  }
+
+  // Switch between Dimension Mode and KG Only Mode
+  function setMode(mode, triggerUpdate = true) {
+    currentMode = mode;
+    localStorage.setItem('addaffodils_v2_mode', mode);
+
+    const btnDim = document.getElementById('btnModeDim');
+    const btnKg = document.getElementById('btnModeKg');
+    const volDivContainer = document.getElementById('volDivContainer');
+
+    if (mode === 'dim') {
+      btnDim.className = "py-2 text-xs font-bold rounded-lg transition duration-150 bg-amber-500 text-slate-950 shadow-md";
+      btnKg.className = "py-2 text-xs font-bold rounded-lg transition duration-150 bg-slate-700 text-slate-300 hover:bg-slate-600";
+      volDivContainer.style.display = 'flex';
+      document.getElementById('th_dim').style.display = '';
+      document.getElementById('td_totalDimSpace').style.display = '';
+    } else {
+      btnKg.className = "py-2 text-xs font-bold rounded-lg transition duration-150 bg-amber-500 text-slate-950 shadow-md";
+      btnDim.className = "py-2 text-xs font-bold rounded-lg transition duration-150 bg-slate-700 text-slate-300 hover:bg-slate-600";
+      volDivContainer.style.display = 'none';
+      document.getElementById('th_dim').style.display = 'none';
+      document.getElementById('td_totalDimSpace').style.display = 'none';
+    }
+
+    if (triggerUpdate) {
+      renderItemInputs();
+      updateInvoice();
+    }
+  }
+
+  // Render Left Column Package Controls with Up/Down Controls & Auto Volumetric Calc
   function renderItemInputs() {
     const container = document.getElementById('itemInputsContainer');
     container.innerHTML = '';
 
+    const divider = parseFloat(document.querySelector('input[name="volDiv"]:checked')?.value || 5000);
+
     items.forEach((item, index) => {
+      // Calculate Volumetric Weight for recommendation
+      const volWeight = (currentMode === 'dim' && item.dimL && item.dimW && item.dimH) 
+        ? ((item.dimL * item.dimW * item.dimH) / divider).toFixed(2)
+        : null;
+
       const row = document.createElement('div');
-      row.className = 'grid grid-cols-12 gap-1.5 items-center bg-slate-50 p-2 rounded-md border border-slate-200 text-xs';
-      row.innerHTML = `
-        <div class="col-span-4">
-          <input type="text" value="${item.desc}" placeholder="Desc" class="w-full border border-slate-300 rounded px-1.5 py-1" oninput="updateItem(${index}, 'desc', this.value)">
-        </div>
-        <div class="col-span-2">
-          <input type="number" step="0.01" value="${item.actual}" placeholder="Act" class="w-full border border-slate-300 rounded px-1 py-1" oninput="updateItem(${index}, 'actual', parseFloat(this.value) || 0)">
-        </div>
-        <div class="col-span-3">
-          <input type="text" value="${item.dim}" placeholder="Dim" class="w-full border border-slate-300 rounded px-1 py-1" oninput="updateItem(${index}, 'dim', this.value)">
-        </div>
-        <div class="col-span-2">
-          <input type="number" step="0.01" value="${item.charge}" placeholder="Chg" class="w-full border border-slate-300 rounded px-1 py-1" oninput="updateItem(${index}, 'charge', parseFloat(this.value) || 0)">
-        </div>
-        <div class="col-span-1 text-right">
-          <button onclick="removeItem(${index})" class="text-rose-600 hover:text-rose-800 font-bold px-1">✕</button>
-        </div>
-      `;
+      row.className = 'bg-slate-800 p-2.5 rounded-xl border border-slate-700 text-xs space-y-2';
+
+      if (currentMode === 'dim') {
+        row.innerHTML = `
+          <div class="flex items-center justify-between gap-2">
+            <input type="text" value="${item.desc}" placeholder="Description" class="w-1/3 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-white" oninput="updateItem(${index}, 'desc', this.value)">
+            <div class="flex items-center gap-1 text-[11px] text-slate-300">
+              <span>Act Wt:</span>
+              <input type="number" step="0.1" value="${item.actual}" class="w-16 bg-slate-900 border border-slate-700 rounded px-1.5 py-1 text-white font-bold" oninput="updateItem(${index}, 'actual', parseFloat(this.value) || 0)">
+              <span>kg</span>
+            </div>
+            <button onclick="removeItem(${index})" class="text-rose-400 hover:text-rose-300 font-bold px-1 text-sm">✕</button>
+          </div>
+
+          <div class="grid grid-cols-12 gap-1.5 items-center pt-1 border-t border-slate-700/60">
+            <div class="col-span-6 flex items-center gap-1 text-[10px] text-slate-400">
+              <input type="number" placeholder="L" value="${item.dimL || ''}" class="w-full bg-slate-900 border border-slate-700 rounded p-1 text-white text-center" oninput="updateItem(${index}, 'dimL', parseFloat(this.value) || 0)">
+              <span>x</span>
+              <input type="number" placeholder="W" value="${item.dimW || ''}" class="w-full bg-slate-900 border border-slate-700 rounded p-1 text-white text-center" oninput="updateItem(${index}, 'dimW', parseFloat(this.value) || 0)">
+              <span>x</span>
+              <input type="number" placeholder="H" value="${item.dimH || ''}" class="w-full bg-slate-900 border border-slate-700 rounded p-1 text-white text-center" oninput="updateItem(${index}, 'dimH', parseFloat(this.value) || 0)">
+            </div>
+            
+            <div class="col-span-6 flex items-center justify-end gap-1">
+              <span class="text-[10px] text-amber-400 font-medium" title="Volumetric Weight Calc">
+                ${volWeight ? `(Vol: ${volWeight})` : ''}
+              </span>
+              <span class="text-[10px] text-slate-400">Chg:</span>
+              <div class="flex items-center bg-slate-900 border border-slate-700 rounded">
+                <button onclick="adjustCharge(${index}, -0.5)" class="px-1.5 py-0.5 text-slate-300 hover:bg-slate-700 font-bold">-</button>
+                <input type="number" step="0.1" value="${item.charge}" class="w-12 bg-transparent text-center text-amber-300 font-bold focus:outline-none" oninput="updateItem(${index}, 'charge', parseFloat(this.value) || 0)">
+                <button onclick="adjustCharge(${index}, 0.5)" class="px-1.5 py-0.5 text-slate-300 hover:bg-slate-700 font-bold">+</button>
+              </div>
+            </div>
+          </div>
+        `;
+      } else {
+        // KG Only Row Mode
+        row.innerHTML = `
+          <div class="flex items-center justify-between gap-2">
+            <input type="text" value="${item.desc}" placeholder="Description" class="w-1/3 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-white" oninput="updateItem(${index}, 'desc', this.value)">
+            
+            <div class="flex items-center gap-1 text-[11px] text-slate-300">
+              <span>Actual:</span>
+              <input type="number" step="0.1" value="${item.actual}" class="w-16 bg-slate-900 border border-slate-700 rounded px-1.5 py-1 text-white font-bold" oninput="updateItem(${index}, 'actual', parseFloat(this.value) || 0)">
+            </div>
+
+            <div class="flex items-center gap-1 text-[11px] text-slate-300">
+              <span>Charge Wt:</span>
+              <div class="flex items-center bg-slate-900 border border-slate-700 rounded">
+                <button onclick="adjustCharge(${index}, -0.5)" class="px-1.5 py-0.5 text-slate-300 hover:bg-slate-700 font-bold">-</button>
+                <input type="number" step="0.1" value="${item.charge}" class="w-12 bg-transparent text-center text-amber-300 font-bold focus:outline-none" oninput="updateItem(${index}, 'charge', parseFloat(this.value) || 0)">
+                <button onclick="adjustCharge(${index}, 0.5)" class="px-1.5 py-0.5 text-slate-300 hover:bg-slate-700 font-bold">+</button>
+              </div>
+            </div>
+
+            <button onclick="removeItem(${index})" class="text-rose-400 hover:text-rose-300 font-bold px-1 text-sm">✕</button>
+          </div>
+        `;
+      }
+
       container.appendChild(row);
     });
+  }
+
+  // Adjust Charge Weight via Up/Down +/- Buttons
+  function adjustCharge(index, amount) {
+    let newVal = (parseFloat(items[index].charge) || 0) + amount;
+    if (newVal < 0) newVal = 0;
+    items[index].charge = parseFloat(newVal.toFixed(2));
+    renderItemInputs();
+    updateInvoice();
   }
 
   function updateItem(index, field, value) {
@@ -315,7 +474,9 @@
     items.push({
       desc: `Box - ${items.length + 1}`,
       actual: 0.00,
-      dim: '31 x 29 x 49',
+      dimL: 31,
+      dimW: 29,
+      dimH: 49,
       charge: 0.00
     });
     renderItemInputs();
@@ -330,9 +491,22 @@
     }
   }
 
-  // Live Update Invoice Sheet
+  // Handle General Form Inputs & Persist to LocalStorage
+  function handleInput() {
+    ['route', 'invNum', 'depDate', 'arrDate', 'shipName', 'shipPhone', 'recName', 'recPhone'].forEach(field => {
+      const val = document.getElementById(`in_${field}`)?.value || '';
+      localStorage.setItem(`addaffodils_v2_${field}`, val);
+    });
+    renderItemInputs();
+    updateInvoice();
+  }
+
+  // Live Update Invoice Display Canvas
   function updateInvoice() {
-    // Text Metadata
+    // Persist items
+    localStorage.setItem('addaffodils_v2_items', JSON.stringify(items));
+
+    // Update Text Metadata
     document.getElementById('out_route').innerText = document.getElementById('in_route').value || 'UK To Malaysia';
     document.getElementById('out_invNum').innerText = document.getElementById('in_invNum').value || '';
     document.getElementById('out_depDate').innerText = document.getElementById('in_depDate').value || '';
@@ -344,7 +518,7 @@
     document.getElementById('out_recName').innerText = document.getElementById('in_recName').value || '';
     document.getElementById('out_recPhone').innerText = document.getElementById('in_recPhone').value || '';
 
-    // Render Table Rows & Totals
+    // Render Rows & Totals
     const tbody = document.getElementById('out_itemsBody');
     tbody.innerHTML = '';
 
@@ -355,13 +529,23 @@
       totalActual += Number(item.actual) || 0;
       totalCharge += Number(item.charge) || 0;
 
+      const dimStr = (item.dimL && item.dimW && item.dimH) ? `${item.dimL} x ${item.dimW} x ${item.dimH}` : '-';
+
       const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td class="py-2 px-3">${item.desc}</td>
-        <td class="py-2 px-3">${Number(item.actual).toFixed(2)} kg</td>
-        <td class="py-2 px-3">${item.dim}</td>
-        <td class="py-2 px-3">${Number(item.charge).toFixed(2)} kg</td>
-      `;
+      if (currentMode === 'dim') {
+        tr.innerHTML = `
+          <td class="py-2.5 px-3 font-medium">${item.desc}</td>
+          <td class="py-2.5 px-3">${Number(item.actual).toFixed(2)} kg</td>
+          <td class="py-2.5 px-3 text-stone-600">${dimStr}</td>
+          <td class="py-2.5 px-3 font-bold text-right">${Number(item.charge).toFixed(2)} kg</td>
+        `;
+      } else {
+        tr.innerHTML = `
+          <td class="py-2.5 px-3 font-medium">${item.desc}</td>
+          <td class="py-2.5 px-3">${Number(item.actual).toFixed(2)} kg</td>
+          <td class="py-2.5 px-3 font-bold text-right">${Number(item.charge).toFixed(2)} kg</td>
+        `;
+      }
       tbody.appendChild(tr);
     });
 
@@ -370,7 +554,24 @@
     document.getElementById('out_totalCharge').innerText = `${totalCharge.toFixed(2)} kg`;
   }
 
-  // Download PDF functionality
+  // Reset to Defaults
+  function resetData() {
+    if (confirm('Are you sure you want to reset all inputs to sample data?')) {
+      localStorage.clear();
+      document.getElementById('in_route').value = "UK To Malaysia";
+      document.getElementById('in_invNum').value = "LDUM0977";
+      document.getElementById('in_depDate').value = "01 / Oct / 2026";
+      document.getElementById('in_arrDate').value = "28 / Oct / 2026";
+      document.getElementById('in_shipName').value = "Thu Ta Soe";
+      document.getElementById('in_shipPhone').value = "07557036551";
+      document.getElementById('in_recName').value = "Khine Wah Wah Ko";
+      document.getElementById('in_recPhone').value = "095944421991";
+      items = JSON.parse(JSON.stringify(defaultItems));
+      initData();
+    }
+  }
+
+  // Export 1: High Resolution PDF
   function downloadPDF() {
     const element = document.getElementById('invoiceArea');
     const invNum = document.getElementById('in_invNum').value || 'Invoice';
@@ -386,32 +587,26 @@
     html2pdf().set(opt).from(element).save();
   }
 
-  // Export to Excel / CSV Functionality
-  function exportExcel() {
+  // Export 2: High Resolution JPEG Image
+  function downloadJPEG() {
+    const element = document.getElementById('invoiceArea');
     const invNum = document.getElementById('in_invNum').value || 'Invoice';
-    let csv = `Invoice Number,${invNum}\nRoute,${document.getElementById('in_route').value}\n\n`;
-    csv += `Shipper Name,${document.getElementById('in_shipName').value}\nShipper Phone,${document.getElementById('in_shipPhone').value}\n\n`;
-    csv += `Receiver Name,${document.getElementById('in_recName').value}\nReceiver Phone,${document.getElementById('in_recPhone').value}\n\n`;
-    csv += `Item Description,Actual Wt (kg),Dimensions,Charge Wt (kg)\n`;
 
-    items.forEach(item => {
-      csv += `"${item.desc}",${item.actual},"${item.dim}",${item.charge}\n`;
+    html2canvas(element, {
+      scale: 3, // High DPI Rendering
+      useCORS: true,
+      backgroundColor: '#F2EDE4'
+    }).then(canvas => {
+      const link = document.createElement('a');
+      link.download = `${invNum}_AD_Daffodils.jpg`;
+      link.href = canvas.toDataURL('image/jpeg', 0.95);
+      link.click();
     });
-
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `${invNum}_Data.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
   }
 
-  // Initial Load
+  // Initialize on Load
   window.onload = function() {
-    renderItemInputs();
-    updateInvoice();
+    initData();
   };
 </script>
 
