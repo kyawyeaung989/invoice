@@ -1,149 +1,156 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AD DAFFODILS INVOICE GENERATOR</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AD DAFFODILS INVOICE GENERATOR V2</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- html2pdf bundle for PDF export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <!-- html2canvas for JPG export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <!-- Google Inter Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-<!-- Tailwind CSS & PDF/Canvas Export Libraries -->
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-
-<style>
-  * {
-    box-sizing: border-box;
-  }
-  body {
-    font-family: 'Inter', sans-serif;
-    background-color: #0f172a;
-    color: #f8fafc;
-    margin: 0;
-    padding: 0;
-  }
-
-  /* Strict A4 Standard Sheet Dimensions (210mm x 297mm) */
-  .invoice-sheet {
-    background-color: #F8F6F0;
-    color: #1e293b;
-    width: 210mm;
-    min-height: 297mm;
-    height: 297mm;
-    padding: 12mm 15mm;
-    margin: 0 auto;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-    position: relative;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-  }
-
-  .table-header {
-    background-color: #2D2C2A;
-    color: #FFFFFF;
-  }
-
-  .table-row {
-    border-bottom: 1px solid #E2DCD0;
-  }
-
-  /* Custom Typography Logo Styling */
-  .styled-text-logo {
-    display: inline-flex;
-    flex-direction: column;
-    align-items: flex-start;
-    justify-content: center;
-    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-    border: 2px solid #fbbf24;
-    border-radius: 12px;
-    padding: 10px 16px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  }
-
-  /* Print Media Rules */
-  @media print {
+  <style>
+    * {
+      box-sizing: border-box;
+    }
     body {
-      background: white !important;
-      padding: 0 !important;
+      font-family: 'Inter', sans-serif;
+      background-color: #0f172a;
+      color: #f8fafc;
+      margin: 0;
+      padding: 0;
     }
-    .no-print {
-      display: none !important;
-    }
-    .invoice-sheet {
-      box-shadow: none !important;
-      width: 210mm !important;
-      height: 297mm !important;
-      padding: 12mm 15mm !important;
-      margin: 0 !important;
-    }
-  }
 
-  /* Custom scrollbar for control panel */
-  ::-webkit-scrollbar {
-    width: 6px;
-  }
-  ::-webkit-scrollbar-track {
-    background: #1e293b;
-  }
-  ::-webkit-scrollbar-thumb {
-    background: #475569;
-    border-radius: 3px;
-  }
-</style>
+    /* Strict A4 Printable Sheet Dimensions (210mm x 297mm) */
+    .invoice-sheet {
+      background-color: #F8F6F0;
+      color: #1e293b;
+      width: 210mm;
+      min-height: 297mm;
+      height: 297mm;
+      padding: 12mm 15mm;
+      margin: 0 auto;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .table-header {
+      background-color: #2D2C2A;
+      color: #FFFFFF;
+    }
+
+    .table-row {
+      border-bottom: 1px solid #E2DCD0;
+    }
+
+    /* Fallback Typography Logo Styling */
+    .styled-text-logo {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: center;
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      border: 2px solid #fbbf24;
+      border-radius: 10px;
+      padding: 8px 14px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    }
+
+    @media print {
+      body {
+        background: white !important;
+        padding: 0 !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .invoice-sheet {
+        box-shadow: none !important;
+        width: 210mm !important;
+        height: 297mm !important;
+        padding: 12mm 15mm !important;
+        margin: 0 !important;
+      }
+    }
+
+    /* Custom Webkit Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #1e293b;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #475569;
+      border-radius: 3px;
+    }
+  </style>
 </head>
 <body class="p-2 md:p-6 min-h-screen">
 
-<!-- Top Action Header -->
-<div class="max-w-[1280px] mx-auto mb-4 flex flex-wrap justify-between items-center bg-slate-800 p-4 rounded-xl gap-3 no-print border border-slate-700 shadow-lg">
+<!-- Top Action Header Bar -->
+<div class="max-w-[1320px] mx-auto mb-4 flex flex-wrap justify-between items-center bg-slate-800 p-4 rounded-xl gap-3 no-print border border-slate-700 shadow-lg">
   <div class="flex items-center gap-3">
-    <div class="bg-amber-500 text-slate-950 p-2 rounded-lg font-black text-xl tracking-wider">AD</div>
+    <div class="bg-amber-500 text-slate-950 px-2.5 py-1 rounded-lg font-black text-xl tracking-wider">AD</div>
     <div>
-      <h1 class="text-amber-400 font-extrabold text-lg leading-tight">AD DAFFODILS</h1>
-      <p class="text-xs text-slate-400">Cargo Invoice & Consignment Generator</p>
+      <div class="flex items-center gap-2">
+        <h1 class="text-amber-400 font-extrabold text-lg leading-tight">AD DAFFODILS V2</h1>
+        <span class="text-[10px] bg-emerald-500/20 text-emerald-300 font-bold px-2 py-0.5 rounded-full border border-emerald-500/30">Rate & Mixed Calc Pro</span>
+      </div>
+      <p class="text-xs text-slate-400">Cargo & Consignment Invoice System</p>
     </div>
   </div>
+  
   <div class="flex flex-wrap items-center gap-2.5">
-    <button onclick="toggleDimensionMode()" id="dimToggleBtn" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-3.5 py-2 rounded-lg text-xs transition flex items-center gap-1.5 shadow">
-      <span>📐 Toggle Dimensions</span>
+    <button onclick="toggleDimensionMode()" id="dimToggleBtn" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-3 py-2 rounded-lg text-xs transition flex items-center gap-1 shadow">
+      <span>📐 Toggle Dimensions Column</span>
     </button>
-    <button onclick="exportJPG()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-3.5 py-2 rounded-lg text-xs transition flex items-center gap-1.5 shadow">
-      <span>🖼️ Export JPG</span>
+    <button onclick="exportJPG()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-3 py-2 rounded-lg text-xs transition flex items-center gap-1 shadow">
+      <span>🖼️️ Export JPG</span>
     </button>
-    <button onclick="exportPDF()" class="bg-rose-600 hover:bg-rose-500 text-white font-semibold px-3.5 py-2 rounded-lg text-xs transition flex items-center gap-1.5 shadow">
+    <button onclick="exportPDF()" class="bg-rose-600 hover:bg-rose-500 text-white font-semibold px-3 py-2 rounded-lg text-xs transition flex items-center gap-1 shadow">
       <span>📄 Export PDF</span>
     </button>
   </div>
 </div>
 
-<div class="max-w-[1280px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
+<!-- Main Workspace Layout -->
+<div class="max-w-[1320px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-  <!-- LEFT COLUMN: Control Panel Inputs -->
-  <div class="lg:col-span-5 bg-slate-800 p-5 rounded-2xl border border-slate-700 space-y-4 no-print max-h-[88vh] overflow-y-auto shadow-xl">
+  <!-- LEFT COLUMN: Control Panel -->
+  <div class="lg:col-span-5 bg-slate-800 p-4 md:p-5 rounded-2xl border border-slate-700 space-y-4 no-print max-h-[88vh] overflow-y-auto shadow-xl">
     <h2 class="text-base font-bold text-slate-100 border-b border-slate-700 pb-2 flex items-center justify-between">
-      <span>⚙️ Invoice Controls</span>
-      <span class="text-xs font-normal text-slate-400">Live Auto-Update</span>
+      <span>⚙️ Control Panel V2</span>
+      <span class="text-xs font-normal text-slate-400">Live Auto Sync</span>
     </h2>
 
-    <!-- Logo Upload & Reset Controls -->
+    <!-- Logo Upload & Auto Persistence Controls -->
     <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-700/80 space-y-2">
       <div class="flex items-center justify-between">
         <label class="block text-xs font-bold text-amber-400">1. Company Logo</label>
         <button id="resetLogoBtn" onclick="clearLogo()" class="text-[11px] bg-slate-800 hover:bg-rose-950 text-rose-300 hover:text-rose-200 border border-slate-700 hover:border-rose-800 px-2 py-0.5 rounded-lg transition hidden">
-          🗑️ Clear / Reset Logo
+          🗑️ Reset Logo
         </button>
       </div>
       <input type="file" id="logoFileInput" accept="image/*" onchange="handleLogoUpload(event)" class="text-xs text-slate-300 w-full file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-amber-500 file:text-slate-950 hover:file:bg-amber-400 cursor-pointer">
-      <p class="text-[11px] text-slate-400 leading-normal">Logo images are saved permanently in IndexedDB. If no logo is selected, the styled text header will display.</p>
+      <p class="text-[10px] text-slate-400 leading-normal">Uploaded logo stays saved permanently in IndexedDB browser memory.</p>
     </div>
 
-    <!-- Invoice Metadata -->
+    <!-- Invoice Header Information -->
     <div class="space-y-3 pt-1">
       <div class="font-bold text-xs text-amber-400 uppercase tracking-wider">2. Invoice Metadata</div>
       <div class="grid grid-cols-2 gap-2.5">
         <div>
-          <label class="block text-[11px] font-semibold text-slate-300 mb-1">Route / Title</label>
+          <label class="block text-[11px] font-semibold text-slate-300 mb-1">Route Title</label>
           <input type="text" id="inputRoute" value="UK To Malaysia" oninput="updateInvoice()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-amber-500">
         </div>
         <div>
@@ -161,11 +168,11 @@
       </div>
     </div>
 
-    <!-- Shipper & Receiver -->
+    <!-- Shipper & Receiver Input Sections -->
     <div class="space-y-3 pt-2 border-t border-slate-700">
       <div class="font-bold text-xs text-amber-400 uppercase tracking-wider">3. Shipper & Receiver</div>
       <div class="space-y-2">
-        <div class="text-[11px] font-semibold text-slate-300">Shipper Details</div>
+        <div class="text-[11px] font-semibold text-slate-300">Shipper</div>
         <div class="grid grid-cols-2 gap-2">
           <input type="text" id="inputShipName" value="Thu Ta Soe" placeholder="Name" oninput="updateInvoice()" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-100">
           <input type="text" id="inputShipPhone" value="07557036551" placeholder="Phone" oninput="updateInvoice()" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-100">
@@ -173,7 +180,7 @@
       </div>
 
       <div class="space-y-2 pt-1">
-        <div class="text-[11px] font-semibold text-slate-300">Receiver Details</div>
+        <div class="text-[11px] font-semibold text-slate-300">Receiver</div>
         <div class="grid grid-cols-2 gap-2">
           <input type="text" id="inputRecName" value="Khine Wah Wah Ko" placeholder="Name" oninput="updateInvoice()" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-100">
           <input type="text" id="inputRecPhone" value="095944421991" placeholder="Phone" oninput="updateInvoice()" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-100">
@@ -181,13 +188,13 @@
       </div>
     </div>
 
-    <!-- Dynamic Packages List -->
+    <!-- Package List with Mixed Weight Modes and Rates -->
     <div class="pt-2 border-t border-slate-700 space-y-3">
       <div class="flex justify-between items-center">
-        <span class="font-bold text-xs text-amber-400 uppercase tracking-wider">4. Consignment Packages</span>
+        <span class="font-bold text-xs text-amber-400 uppercase tracking-wider">4. Consignment Items</span>
         <div class="flex items-center gap-2">
           <div class="flex items-center gap-1.5 text-xs text-slate-300 bg-slate-900 px-2 py-1 rounded-lg border border-slate-700">
-            <span class="text-[10px] text-slate-400 font-semibold">Div:</span>
+            <span class="text-[10px] text-slate-400 font-semibold">Divisor:</span>
             <label class="inline-flex items-center text-[11px] cursor-pointer"><input type="radio" name="divOption" value="5000" checked onchange="calculateAll()" class="accent-amber-500"> <span class="ml-1">5000</span></label>
             <label class="inline-flex items-center text-[11px] cursor-pointer ml-1"><input type="radio" name="divOption" value="6000" onchange="calculateAll()" class="accent-amber-500"> <span class="ml-1">6000</span></label>
           </div>
@@ -197,13 +204,13 @@
         </div>
       </div>
 
-      <div id="packagesInputs" class="space-y-2.5">
-        <!-- Dynamic Package Cards -->
+      <div id="packagesInputs" class="space-y-3">
+        <!-- Dynamic Package Item Cards Injected Here -->
       </div>
     </div>
   </div>
 
-  <!-- RIGHT COLUMN: Live Print-Ready A4 Invoice Sheet Preview -->
+  <!-- RIGHT COLUMN: Printable Live A4 Preview -->
   <div class="lg:col-span-7 flex justify-center items-start overflow-x-auto p-2">
     <div id="invoiceContainer">
       <div id="invoice" class="invoice-sheet text-xs">
@@ -214,12 +221,10 @@
             
             <!-- Dual Mode Header Logo Block -->
             <div id="logoHeaderBlock" class="min-w-[210px] min-h-[70px] flex items-center justify-start">
-              <!-- Image Logo Container -->
               <div id="imageLogoWrapper" class="hidden w-52 h-20 flex items-center justify-start overflow-hidden">
                 <img id="viewLogoImg" src="" alt="AD DAFFODILS Logo" class="max-w-full max-h-full object-contain">
               </div>
 
-              <!-- Styled Typography Badge Logo Container (Default Fallback) -->
               <div id="textLogoWrapper" class="styled-text-logo">
                 <div class="text-amber-400 font-black text-xl tracking-wider uppercase leading-none">AD DAFFODILS</div>
                 <div class="text-slate-300 font-bold text-[9px] tracking-widest uppercase mt-1">Cargo & Consignment Logistics</div>
@@ -228,7 +233,7 @@
 
             <div class="text-right leading-tight">
               <h2 id="viewRoute" class="text-lg font-black text-stone-900 mb-1.5 uppercase tracking-wide">UK To Malaysia</h2>
-              <div class="text-[11px] text-stone-700 space-y-1">
+              <div class="text-[11px] text-stone-700 space-y-0.5">
                 <div>Invoice Number: <span id="viewInvNo" class="font-extrabold text-stone-900">LDUM0977</span></div>
                 <div>Departure Date: <span id="viewDepDate" class="font-bold text-stone-900">01 / Oct / 2026</span></div>
                 <div>Est. Arrival Date: <span id="viewArrDate" class="font-bold text-stone-900">28 / Oct / 2026</span></div>
@@ -237,17 +242,17 @@
           </div>
 
           <!-- SHIPPER & RECEIVER SECTION -->
-          <div class="grid grid-cols-2 gap-4 my-4 text-xs">
-            <div class="bg-stone-200/70 p-3 rounded-lg border border-stone-300">
-              <div class="font-black text-stone-700 uppercase tracking-wider mb-1.5 text-[10px]">SHIPPER DETAILS</div>
-              <div class="space-y-1 leading-snug">
+          <div class="grid grid-cols-2 gap-4 my-3 text-xs">
+            <div class="bg-stone-200/70 p-2.5 rounded-lg border border-stone-300">
+              <div class="font-black text-stone-700 uppercase tracking-wider mb-1 text-[10px]">SHIPPER DETAILS</div>
+              <div class="space-y-0.5 leading-snug">
                 <div><span class="text-stone-600 font-medium">Name:</span> <span id="viewShipName" class="font-bold text-stone-900">Thu Ta Soe</span></div>
                 <div><span class="text-stone-600 font-medium">Phone:</span> <span id="viewShipPhone" class="font-bold text-stone-900">07557036551</span></div>
               </div>
             </div>
-            <div class="bg-stone-200/70 p-3 rounded-lg border border-stone-300">
-              <div class="font-black text-stone-700 uppercase tracking-wider mb-1.5 text-[10px]">RECEIVER DETAILS</div>
-              <div class="space-y-1 leading-snug">
+            <div class="bg-stone-200/70 p-2.5 rounded-lg border border-stone-300">
+              <div class="font-black text-stone-700 uppercase tracking-wider mb-1 text-[10px]">RECEIVER DETAILS</div>
+              <div class="space-y-0.5 leading-snug">
                 <div><span class="text-stone-600 font-medium">Name:</span> <span id="viewRecName" class="font-bold text-stone-900">Khine Wah Wah Ko</span></div>
                 <div><span class="text-stone-600 font-medium">Phone:</span> <span id="viewRecPhone" class="font-bold text-stone-900">095944421991</span></div>
               </div>
@@ -255,48 +260,52 @@
           </div>
 
           <!-- CONSIGNMENT TABLE SECTION -->
-          <table class="w-full text-left border-collapse my-3 text-xs">
+          <table class="w-full text-left border-collapse my-2 text-xs">
             <thead>
               <tr class="table-header text-[11px] uppercase tracking-wider">
-                <th class="p-2.5 font-bold rounded-l-md">Item Description</th>
-                <th class="p-2.5 font-bold text-center">Actual Wt.</th>
-                <th class="p-2.5 font-bold text-center dim-col">Dimensions (cm)</th>
-                <th class="p-2.5 font-bold text-right rounded-r-md">Charge Wt.</th>
+                <th class="p-2 font-bold rounded-l-md">Item Description</th>
+                <th class="p-2 font-bold text-center">Actual Wt.</th>
+                <th class="p-2 font-bold text-center dim-col">Dimensions (cm)</th>
+                <th class="p-2 font-bold text-center">Charge Wt.</th>
+                <th class="p-2 font-bold text-center">Rate (£/kg)</th>
+                <th class="p-2 font-bold text-right rounded-r-md">Total Price (£)</th>
               </tr>
             </thead>
             <tbody id="viewTableBody">
-              <!-- JS Injected Rows -->
+              <!-- Dynamically Generated Invoice Rows -->
             </tbody>
             <tfoot>
-              <tr class="font-extrabold text-stone-900 border-t-2 border-stone-400 text-xs">
-                <td id="viewTotalPkg" class="p-2.5">TOTAL (5 Packages)</td>
-                <td id="viewTotalAct" class="p-2.5 text-center">34.55 kg</td>
-                <td class="p-2.5 text-center dim-col">-</td>
-                <td id="viewTotalChg" class="p-2.5 text-right">38.40 kg</td>
+              <tr class="font-extrabold text-stone-900 border-t-2 border-stone-400 bg-stone-200/40 text-xs">
+                <td id="viewTotalPkg" class="p-2">TOTAL (5 Packages)</td>
+                <td id="viewTotalAct" class="p-2 text-center">34.55 kg</td>
+                <td class="p-2 text-center dim-col">-</td>
+                <td id="viewTotalChg" class="p-2 text-center text-stone-900">38.40 kg</td>
+                <td class="p-2 text-center">-</td>
+                <td id="viewTotalPrice" class="p-2 text-right text-stone-900 font-black text-sm">£ 172.80</td>
               </tr>
             </tfoot>
           </table>
 
-          <!-- PAYMENT METHOD SECTION (Strict Left-Aligned) -->
-          <div class="mt-5 pt-3 border-t border-stone-300">
-            <div class="font-black text-stone-700 uppercase tracking-wider mb-2 text-[10px]">PAYMENT METHOD</div>
-            <div class="max-w-md bg-stone-100 p-3.5 rounded-lg border border-stone-300/80 text-xs text-stone-800">
-              <div class="grid grid-cols-12 gap-1 py-1 border-b border-stone-200">
+          <!-- PAYMENT METHOD SECTION (Left Aligned Details) -->
+          <div class="mt-4 pt-2 border-t border-stone-300">
+            <div class="font-black text-stone-700 uppercase tracking-wider mb-1.5 text-[10px]">PAYMENT METHOD</div>
+            <div class="max-w-md bg-stone-100 p-3 rounded-lg border border-stone-300/80 text-xs text-stone-800">
+              <div class="grid grid-cols-12 gap-1 py-0.5 border-b border-stone-200">
                 <span class="col-span-5 text-stone-600 font-semibold text-left">ACCOUNT TYPE</span>
                 <span class="col-span-1 text-stone-400 text-center">:</span>
                 <span class="col-span-6 font-bold text-stone-900 text-left">BUSINESS</span>
               </div>
-              <div class="grid grid-cols-12 gap-1 py-1 border-b border-stone-200">
+              <div class="grid grid-cols-12 gap-1 py-0.5 border-b border-stone-200">
                 <span class="col-span-5 text-stone-600 font-semibold text-left">ACCOUNT NAME</span>
                 <span class="col-span-1 text-stone-400 text-center">:</span>
                 <span class="col-span-6 font-bold text-stone-900 text-left">AD DAFFODILS CONSIGNMENT</span>
               </div>
-              <div class="grid grid-cols-12 gap-1 py-1 border-b border-stone-200">
+              <div class="grid grid-cols-12 gap-1 py-0.5 border-b border-stone-200">
                 <span class="col-span-5 text-stone-600 font-semibold text-left">SORT CODE</span>
                 <span class="col-span-1 text-stone-400 text-center">:</span>
                 <span class="col-span-6 font-bold text-stone-900 text-left">82-19-74</span>
               </div>
-              <div class="grid grid-cols-12 gap-1 py-1">
+              <div class="grid grid-cols-12 gap-1 py-0.5">
                 <span class="col-span-5 text-stone-600 font-semibold text-left">ACCOUNT NUMBER</span>
                 <span class="col-span-1 text-stone-400 text-center">:</span>
                 <span class="col-span-6 font-bold text-stone-900 text-left">40256654</span>
@@ -306,7 +315,7 @@
         </div>
 
         <!-- FOOTER SECTION -->
-        <div class="flex justify-between items-end text-[11px] text-stone-600 pt-3 border-t border-stone-300 w-full mt-auto">
+        <div class="flex justify-between items-end text-[10px] text-stone-600 pt-2 border-t border-stone-300 w-full mt-auto">
           <div>
             <div class="font-bold text-stone-800 text-xs">Thank You For Using Our Cargo Service!</div>
             <div>Phone: +44 7861 489456</div>
@@ -326,17 +335,17 @@
 <script>
 let showDimensions = true;
 
-// Default Consignment Packages State
+// Default Package State (Mix of Volumetric & Flat KG Items)
 let packages = [
-  { desc: 'Box - 1', act: 5.80, l: 31, w: 29, h: 49, chg: 7.00 },
-  { desc: 'Box - 2', act: 6.75, l: 31, w: 29, h: 49, chg: 7.00 },
-  { desc: 'Box - 3', act: 5.90, l: 31, w: 29, h: 49, chg: 7.00 },
-  { desc: 'Box - 4', act: 10.40, l: 31, w: 29, h: 49, chg: 10.40 },
-  { desc: 'Box - 5', act: 5.70, l: 31, w: 29, h: 49, chg: 7.00 }
+  { desc: 'Box - 1', calcType: 'dim', act: 5.80, l: 31, w: 29, h: 49, chg: 7.00, rate: 4.50 },
+  { desc: 'Box - 2', calcType: 'dim', act: 6.75, l: 31, w: 29, h: 49, chg: 7.00, rate: 4.50 },
+  { desc: 'Box - 3', calcType: 'dim', act: 5.90, l: 31, w: 29, h: 49, chg: 7.00, rate: 4.50 },
+  { desc: 'Box - 4', calcType: 'flat', act: 10.40, l: 0, w: 0, h: 0, chg: 10.40, rate: 4.50 },
+  { desc: 'Box - 5', calcType: 'flat', act: 5.70, l: 0, w: 0, h: 0, chg: 5.70, rate: 4.50 }
 ];
 
-// IndexedDB Helper for Large Persistent Storage (Guarantees image doesn't get cleared on refresh)
-const DB_NAME = 'ADDaffodilsInvoiceDB';
+// IndexedDB Helper for Large Permanent Logo Storage
+const DB_NAME = 'ADDaffodilsInvoiceDBV2';
 const DB_VERSION = 1;
 const STORE_NAME = 'assets';
 
@@ -362,7 +371,7 @@ async function saveLogoToDB(dataUrl) {
     store.put(dataUrl, 'companyLogo');
     await tx.complete;
   } catch (err) {
-    console.error('Failed to save logo in IndexedDB:', err);
+    console.error('Failed saving logo:', err);
   }
 }
 
@@ -388,7 +397,7 @@ async function deleteLogoFromDB() {
     const store = tx.objectStore(STORE_NAME);
     store.delete('companyLogo');
   } catch (err) {
-    console.error('Failed to remove logo from IndexedDB:', err);
+    console.error('Failed deleting logo:', err);
   }
 }
 
@@ -398,7 +407,6 @@ async function init() {
   updateInvoice();
 }
 
-// Load logo from IndexedDB or fallback to styled text header
 async function loadSavedLogo() {
   const savedLogo = await getLogoFromDB();
   if (savedLogo) {
@@ -432,7 +440,6 @@ function displayTextLogo() {
   if (fileInput) fileInput.value = '';
 }
 
-// Handle Custom Logo Upload
 async function handleLogoUpload(event) {
   const file = event.target.files[0];
   if (file) {
@@ -446,13 +453,11 @@ async function handleLogoUpload(event) {
   }
 }
 
-// Clear Logo & Revert to Styled Typography Header
 async function clearLogo() {
   await deleteLogoFromDB();
   displayTextLogo();
 }
 
-// Render Input Forms for Packages with 0.1 Charge Weight Steppers
 function renderPackageInputs() {
   const container = document.getElementById('packagesInputs');
   container.innerHTML = '';
@@ -460,7 +465,8 @@ function renderPackageInputs() {
   const divVal = parseFloat(document.querySelector('input[name="divOption"]:checked').value);
 
   packages.forEach((pkg, index) => {
-    const volWt = ((pkg.l * pkg.w * pkg.h) / divVal).toFixed(2);
+    const volWt = pkg.calcType === 'dim' ? ((pkg.l * pkg.w * pkg.h) / divVal).toFixed(2) : '0.00';
+    const totalPrice = (pkg.chg * (pkg.rate || 0)).toFixed(2);
 
     const div = document.createElement('div');
     div.className = 'bg-slate-900 p-2.5 rounded-xl border border-slate-700/80 space-y-2 text-xs shadow-sm';
@@ -468,6 +474,12 @@ function renderPackageInputs() {
       <div class="flex items-center justify-between gap-2">
         <input type="text" value="${pkg.desc}" oninput="updatePkgField(${index}, 'desc', this.value)" class="bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-slate-100 font-semibold w-24 focus:outline-none focus:border-amber-500">
         
+        <!-- Calculation Basis Switcher -->
+        <select onchange="updatePkgField(${index}, 'calcType', this.value)" class="bg-slate-800 border border-slate-700 rounded text-amber-300 font-semibold text-[11px] px-1.5 py-1 focus:outline-none focus:border-amber-500">
+          <option value="dim" ${pkg.calcType === 'dim' ? 'selected' : ''}>Dim (L×W×H)</option>
+          <option value="flat" ${pkg.calcType === 'flat' ? 'selected' : ''}>Flat KG Only</option>
+        </select>
+
         <div class="flex items-center gap-1">
           <span class="text-slate-400 text-[11px]">Act:</span>
           <input type="number" step="0.01" value="${pkg.act}" oninput="updatePkgField(${index}, 'act', parseFloat(this.value)||0)" class="bg-slate-800 border border-slate-700 rounded-lg px-1.5 py-1 text-slate-100 w-16 text-center focus:outline-none focus:border-amber-500 font-medium">
@@ -477,24 +489,33 @@ function renderPackageInputs() {
         <button onclick="removePackage(${index})" class="text-rose-400 hover:text-rose-300 font-bold px-1 py-0.5 rounded hover:bg-slate-800 transition">✕</button>
       </div>
 
-      <div class="flex items-center justify-between gap-1 pt-1.5 border-t border-slate-800/80">
-        <div class="flex items-center gap-1 ${showDimensions ? '' : 'hidden'}">
+      <!-- Dimensions Control -->
+      <div class="${pkg.calcType === 'dim' ? '' : 'hidden'} flex items-center justify-between gap-1 pt-1.5 border-t border-slate-800/80">
+        <div class="flex items-center gap-1">
           <input type="number" value="${pkg.l}" oninput="updatePkgField(${index}, 'l', parseFloat(this.value)||0)" class="bg-slate-800 border border-slate-700 rounded w-10 text-center text-slate-100 py-0.5 text-xs">
           <span class="text-slate-500">x</span>
           <input type="number" value="${pkg.w}" oninput="updatePkgField(${index}, 'w', parseFloat(this.value)||0)" class="bg-slate-800 border border-slate-700 rounded w-10 text-center text-slate-100 py-0.5 text-xs">
           <span class="text-slate-500">x</span>
           <input type="number" value="${pkg.h}" oninput="updatePkgField(${index}, 'h', parseFloat(this.value)||0)" class="bg-slate-800 border border-slate-700 rounded w-10 text-center text-slate-100 py-0.5 text-xs">
         </div>
+        <div class="text-[10px] text-amber-400/90 font-mono">Vol: ${volWt} kg</div>
+      </div>
 
-        <div class="text-[10px] text-amber-400/90 font-mono">Vol: ${volWt}kg</div>
+      <!-- Rate, Charge Weight Stepper & Total Price -->
+      <div class="flex items-center justify-between gap-1 pt-1.5 border-t border-slate-800/80 text-[11px]">
+        <div class="flex items-center gap-1">
+          <span class="text-slate-400">Rate: £</span>
+          <input type="number" step="0.1" value="${pkg.rate || 0}" oninput="updatePkgField(${index}, 'rate', parseFloat(this.value)||0)" class="bg-slate-800 border border-slate-700 rounded w-14 text-center text-emerald-300 font-bold py-0.5 focus:outline-none focus:border-amber-500">
+        </div>
 
-        <!-- Fine-Tuning Charge Weight Control (+ / - 0.1kg) -->
         <div class="flex items-center gap-1">
           <span class="text-slate-400 font-medium text-[11px]">Chg:</span>
           <button onclick="adjustChg(${index}, -0.1)" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-2 py-0.5 rounded border border-slate-700 font-bold text-xs active:scale-95 transition">-</button>
-          <input type="number" step="0.1" value="${pkg.chg.toFixed(1)}" oninput="updateChgDirect(${index}, this.value)" class="bg-slate-800 border border-slate-700 rounded w-16 text-center text-amber-300 font-bold py-0.5 focus:outline-none focus:border-amber-500">
+          <input type="number" step="0.1" value="${pkg.chg.toFixed(2)}" oninput="updateChgDirect(${index}, this.value)" class="bg-slate-800 border border-slate-700 rounded w-16 text-center text-amber-300 font-bold py-0.5 focus:outline-none focus:border-amber-500">
           <button onclick="adjustChg(${index}, 0.1)" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-2 py-0.5 rounded border border-slate-700 font-bold text-xs active:scale-95 transition">+</button>
         </div>
+
+        <div class="text-emerald-400 font-extrabold text-xs">£ ${totalPrice}</div>
       </div>
     `;
     container.appendChild(div);
@@ -503,6 +524,12 @@ function renderPackageInputs() {
 
 function updatePkgField(index, field, value) {
   packages[index][field] = value;
+  
+  if (field === 'calcType' && value === 'flat') {
+    packages[index].chg = packages[index].act;
+  }
+  
+  renderPackageInputs();
   updateInvoice();
 }
 
@@ -518,7 +545,7 @@ function adjustChg(index, delta) {
 }
 
 function addPackage() {
-  packages.push({ desc: `Box - ${packages.length + 1}`, act: 5.00, l: 30, w: 30, h: 30, chg: 5.00 });
+  packages.push({ desc: `Box - ${packages.length + 1}`, calcType: 'dim', act: 5.00, l: 30, w: 30, h: 30, chg: 5.00, rate: 4.50 });
   renderPackageInputs();
   updateInvoice();
 }
@@ -540,7 +567,6 @@ function toggleDimensionMode() {
   showDimensions = !showDimensions;
   const dimCols = document.querySelectorAll('.dim-col');
   dimCols.forEach(col => col.style.display = showDimensions ? '' : 'none');
-  renderPackageInputs();
 }
 
 function updateInvoice() {
@@ -559,18 +585,25 @@ function updateInvoice() {
 
   let totalAct = 0;
   let totalChg = 0;
+  let grandTotalPrice = 0;
 
   packages.forEach(pkg => {
     totalAct += pkg.act;
     totalChg += pkg.chg;
+    const itemTotalPrice = pkg.chg * (pkg.rate || 0);
+    grandTotalPrice += itemTotalPrice;
 
     const tr = document.createElement('tr');
     tr.className = 'table-row';
+    const dimDisplay = pkg.calcType === 'dim' ? `${pkg.l} x ${pkg.w} x ${pkg.h}` : 'N/A (Flat KG)';
+    
     tr.innerHTML = `
-      <td class="p-2.5 font-semibold text-stone-900">${pkg.desc}</td>
-      <td class="p-2.5 text-center">${pkg.act.toFixed(2)} kg</td>
-      <td class="p-2.5 text-center dim-col" style="${showDimensions ? '' : 'display:none;'}">${pkg.l} x ${pkg.w} x ${pkg.h}</td>
-      <td class="p-2.5 text-right font-bold text-stone-900">${pkg.chg.toFixed(2)} kg</td>
+      <td class="p-2 font-semibold text-stone-900">${pkg.desc}</td>
+      <td class="p-2 text-center">${pkg.act.toFixed(2)} kg</td>
+      <td class="p-2 text-center dim-col text-stone-600" style="${showDimensions ? '' : 'display:none;'}">${dimDisplay}</td>
+      <td class="p-2 text-center font-bold text-stone-900">${pkg.chg.toFixed(2)} kg</td>
+      <td class="p-2 text-center text-stone-800">£ ${(pkg.rate || 0).toFixed(2)}</td>
+      <td class="p-2 text-right font-extrabold text-stone-900">£ ${itemTotalPrice.toFixed(2)}</td>
     `;
     tbody.appendChild(tr);
   });
@@ -578,9 +611,10 @@ function updateInvoice() {
   document.getElementById('viewTotalPkg').innerText = `TOTAL (${packages.length} Packages)`;
   document.getElementById('viewTotalAct').innerText = `${totalAct.toFixed(2)} kg`;
   document.getElementById('viewTotalChg').innerText = `${totalChg.toFixed(2)} kg`;
+  document.getElementById('viewTotalPrice').innerText = `£ ${grandTotalPrice.toFixed(2)}`;
 }
 
-// Export HD JPG using html2canvas
+// Export HD JPG
 function exportJPG() {
   const invoice = document.getElementById('invoice');
   html2canvas(invoice, { 
@@ -590,18 +624,18 @@ function exportJPG() {
     logging: false
   }).then(canvas => {
     const link = document.createElement('a');
-    link.download = `${document.getElementById('inputInvNo').value}_AD_Daffodils.jpg`;
+    link.download = `${document.getElementById('inputInvNo').value}_AD_Daffodils_V2.jpg`;
     link.href = canvas.toDataURL('image/jpeg', 1.0);
     link.click();
   });
 }
 
-// Export Exact Single Page A4 PDF using html2pdf.js
+// Export Precise Single Page A4 PDF
 function exportPDF() {
   const element = document.getElementById('invoice');
   const opt = {
     margin: 0,
-    filename: `${document.getElementById('inputInvNo').value}_AD_Daffodils.pdf`,
+    filename: `${document.getElementById('inputInvNo').value}_AD_Daffodils_V2.pdf`,
     image: { type: 'jpeg', quality: 1.0 },
     html2canvas: { scale: 3, useCORS: true, allowTaint: true },
     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
