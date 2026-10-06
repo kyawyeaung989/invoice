@@ -115,7 +115,7 @@
       <span>📐 Toggle Dimensions Column</span>
     </button>
     <button onclick="exportJPG()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-3 py-2 rounded-lg text-xs transition flex items-center gap-1 shadow">
-      <span>🖼️️ Export JPG</span>
+      <span>🖼 Export JPG</span>
     </button>
     <button onclick="exportPDF()" class="bg-rose-600 hover:bg-rose-500 text-white font-semibold px-3 py-2 rounded-lg text-xs transition flex items-center gap-1 shadow">
       <span>📄 Export PDF</span>
@@ -147,7 +147,12 @@
 
     <!-- Invoice Header Information -->
     <div class="space-y-3 pt-1">
-      <div class="font-bold text-xs text-amber-400 uppercase tracking-wider">2. Invoice Metadata</div>
+      <div class="flex justify-between items-center">
+        <div class="font-bold text-xs text-amber-400 uppercase tracking-wider">2. Invoice Metadata</div>
+        <button onclick="autoNextInvoiceNo()" class="text-[10px] bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-2 py-0.5 rounded transition">
+          + Auto Next Inv No.
+        </button>
+      </div>
       <div class="grid grid-cols-2 gap-2.5">
         <div>
           <label class="block text-[11px] font-semibold text-slate-300 mb-1">Route Title</label>
@@ -208,6 +213,31 @@
         <!-- Dynamic Package Item Cards Injected Here -->
       </div>
     </div>
+
+    <!-- Recent Invoices History Section -->
+    <div class="pt-3 border-t border-slate-700 space-y-2">
+      <div class="flex justify-between items-center">
+        <span class="font-bold text-xs text-amber-400 uppercase tracking-wider">5. Recent Invoices History</span>
+        <button onclick="clearHistory()" class="text-[10px] bg-rose-900/80 hover:bg-rose-800 text-rose-200 px-2 py-0.5 rounded border border-rose-700 transition">
+          🗑️ Clear History
+        </button>
+      </div>
+      <div class="bg-slate-900 rounded-xl border border-slate-700/80 max-h-40 overflow-y-auto">
+        <table class="w-full text-left text-[11px]">
+          <thead class="bg-slate-950 text-slate-400 sticky top-0 border-b border-slate-800">
+            <tr>
+              <th class="p-1.5">Inv No.</th>
+              <th class="p-1.5">Shipper</th>
+              <th class="p-1.5 text-right">Amount</th>
+            </tr>
+          </thead>
+          <tbody id="historyTableBody" class="divide-y divide-slate-800/60 text-slate-300">
+            <!-- Dynamic History Rows Injected Here -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
   </div>
 
   <!-- RIGHT COLUMN: Printable Live A4 Preview -->
@@ -334,6 +364,7 @@
 
 <script>
 let showDimensions = true;
+let invoiceHistory = JSON.parse(localStorage.getItem('addaffodils_history') || '[]');
 
 // Default Package State (Mix of Volumetric & Flat KG Items)
 let packages = [
@@ -403,8 +434,79 @@ async function deleteLogoFromDB() {
 
 async function init() {
   await loadSavedLogo();
+  loadSavedInvoiceNumber();
   renderPackageInputs();
+  renderHistoryTable();
   updateInvoice();
+}
+
+// INVOICE NUMBER AUTO-INCREMENT & HISTORY Persistence
+function loadSavedInvoiceNumber() {
+  const savedInv = localStorage.getItem('addaffodils_last_inv_no');
+  if (savedInv) {
+    document.getElementById('inputInvNo').value = savedInv;
+  }
+}
+
+function autoNextInvoiceNo() {
+  const invInput = document.getElementById('inputInvNo');
+  let val = invInput.value.trim();
+  const match = val.match(/^(.*?)(?:\b|_|-)*(\d+)$/);
+  
+  if (match) {
+    const prefix = match[1];
+    const numStr = match[2];
+    const nextNum = parseInt(numStr, 10) + 1;
+    const paddedNum = String(nextNum).padStart(numStr.length, '0');
+    invInput.value = prefix + paddedNum;
+  } else {
+    invInput.value = val + '001';
+  }
+  updateInvoice();
+}
+
+function saveToHistory(invNo, shipper, amount) {
+  const existingIdx = invoiceHistory.findIndex(item => item.invNo === invNo);
+  const entry = { invNo, shipper, amount };
+  
+  if (existingIdx !== -1) {
+    invoiceHistory[existingIdx] = entry;
+  } else {
+    invoiceHistory.unshift(entry);
+  }
+  
+  if (invoiceHistory.length > 50) invoiceHistory.pop();
+  localStorage.setItem('addaffodils_history', JSON.stringify(invoiceHistory));
+  renderHistoryTable();
+}
+
+function renderHistoryTable() {
+  const tbody = document.getElementById('historyTableBody');
+  tbody.innerHTML = '';
+  
+  if (invoiceHistory.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="3" class="p-2 text-center text-slate-500">No invoice history saved</td></tr>`;
+    return;
+  }
+  
+  invoiceHistory.forEach(item => {
+    const tr = document.createElement('tr');
+    tr.className = 'hover:bg-slate-800/80 transition';
+    tr.innerHTML = `
+      <td class="p-1.5 font-bold text-amber-400">${item.invNo}</td>
+      <td class="p-1.5 text-slate-200 truncate max-w-[110px]">${item.shipper}</td>
+      <td class="p-1.5 text-right font-semibold text-emerald-400">£ ${item.amount}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function clearHistory() {
+  if (confirm("Are you sure you want to clear invoice history?")) {
+    invoiceHistory = [];
+    localStorage.removeItem('addaffodils_history');
+    renderHistoryTable();
+  }
 }
 
 async function loadSavedLogo() {
@@ -570,8 +672,11 @@ function toggleDimensionMode() {
 }
 
 function updateInvoice() {
+  const currentInv = document.getElementById('inputInvNo').value;
+  localStorage.setItem('addaffodils_last_inv_no', currentInv);
+
   document.getElementById('viewRoute').innerText = document.getElementById('inputRoute').value;
-  document.getElementById('viewInvNo').innerText = document.getElementById('inputInvNo').value;
+  document.getElementById('viewInvNo').innerText = currentInv;
   document.getElementById('viewDepDate').innerText = document.getElementById('inputDepDate').value;
   document.getElementById('viewArrDate').innerText = document.getElementById('inputArrDate').value;
 
@@ -614,8 +719,14 @@ function updateInvoice() {
   document.getElementById('viewTotalPrice').innerText = `£ ${grandTotalPrice.toFixed(2)}`;
 }
 
-// Export HD JPG
+// Export HD JPG & Save History
 function exportJPG() {
+  const invNo = document.getElementById('inputInvNo').value;
+  const shipName = document.getElementById('inputShipName').value;
+  const amountStr = document.getElementById('viewTotalPrice').innerText.replace('£ ', '');
+
+  saveToHistory(invNo, shipName, amountStr);
+
   const invoice = document.getElementById('invoice');
   html2canvas(invoice, { 
     scale: 3, 
@@ -624,18 +735,24 @@ function exportJPG() {
     logging: false
   }).then(canvas => {
     const link = document.createElement('a');
-    link.download = `${document.getElementById('inputInvNo').value}_AD_Daffodils_V2.jpg`;
+    link.download = `${invNo}_AD_Daffodils_V2.jpg`;
     link.href = canvas.toDataURL('image/jpeg', 1.0);
     link.click();
   });
 }
 
-// Export Precise Single Page A4 PDF
+// Export Precise Single Page A4 PDF & Save History
 function exportPDF() {
+  const invNo = document.getElementById('inputInvNo').value;
+  const shipName = document.getElementById('inputShipName').value;
+  const amountStr = document.getElementById('viewTotalPrice').innerText.replace('£ ', '');
+
+  saveToHistory(invNo, shipName, amountStr);
+
   const element = document.getElementById('invoice');
   const opt = {
     margin: 0,
-    filename: `${document.getElementById('inputInvNo').value}_AD_Daffodils_V2.pdf`,
+    filename: `${invNo}_AD_Daffodils_V2.pdf`,
     image: { type: 'jpeg', quality: 1.0 },
     html2canvas: { scale: 3, useCORS: true, allowTaint: true },
     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
