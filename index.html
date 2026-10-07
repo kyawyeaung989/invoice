@@ -193,7 +193,23 @@
       </div>
     </div>
 
-    <!-- Package List with Mixed Weight Modes and Rates -->
+    <!-- OVERALL LOCAL DELIVERY FEE CONTROL -->
+    <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-700/80 space-y-2 pt-2 border-t border-slate-700">
+      <div class="flex items-center justify-between">
+        <span class="font-bold text-xs text-amber-400 uppercase tracking-wider">Overall Local Delivery Fee</span>
+        <label class="inline-flex items-center cursor-pointer text-xs font-bold text-emerald-400">
+          <input type="checkbox" id="singleDelFeeToggle" onchange="updateInvoice()" class="accent-amber-500 mr-1.5 w-4 h-4">
+          Include Overall Fee
+        </label>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="text-xs text-slate-300 font-semibold">Amount (£):</span>
+        <input type="number" id="singleDelFeeInput" value="5.00" step="0.5" oninput="updateInvoice()" class="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-amber-300 font-bold w-24 text-center focus:outline-none focus:border-amber-500">
+        <span class="text-[10px] text-slate-400">Invoice အောက်ခြေတွင် ၁ ခါတည်း ပေါင်းမည်။</span>
+      </div>
+    </div>
+
+    <!-- Package List Section -->
     <div class="pt-2 border-t border-slate-700 space-y-3">
       <div class="flex justify-between items-center">
         <span class="font-bold text-xs text-amber-400 uppercase tracking-wider">4. Consignment Items</span>
@@ -257,7 +273,7 @@
 
               <div id="textLogoWrapper" class="styled-text-logo">
                 <div class="text-amber-400 font-black text-xl tracking-wider uppercase leading-none">AD DAFFODILS</div>
-                <div class="text-slate-300 font-bold text-[9px] tracking-widest uppercase mt-1">Cargo & Consignment Logistics</div>
+                <div class="text-slate-300 font-bold text-[9px] tracking-widest uppercase mt-1">AD Daffodils Consignment</div>
               </div>
             </div>
 
@@ -305,6 +321,11 @@
               <!-- Dynamically Generated Invoice Rows -->
             </tbody>
             <tfoot>
+              <!-- Single Overall Delivery Fee Row -->
+              <tr id="deliveryFeeRow" class="hidden font-bold text-amber-900 bg-amber-50/60 border-t border-stone-300 text-xs">
+                <td colspan="5" class="p-2 text-right uppercase tracking-wider font-extrabold">Overall Local Delivery Fee:</td>
+                <td id="viewDeliveryFeeAmount" class="p-2 text-right font-black">£ 5.00</td>
+              </tr>
               <tr class="font-extrabold text-stone-900 border-t-2 border-stone-400 bg-stone-200/40 text-xs">
                 <td id="viewTotalPkg" class="p-2">TOTAL (5 Packages)</td>
                 <td id="viewTotalAct" class="p-2 text-center">34.55 kg</td>
@@ -316,7 +337,7 @@
             </tfoot>
           </table>
 
-          <!-- PAYMENT METHOD SECTION (Left Aligned Details) -->
+          <!-- PAYMENT METHOD SECTION -->
           <div class="mt-4 pt-2 border-t border-stone-300">
             <div class="font-black text-stone-700 uppercase tracking-wider mb-1.5 text-[10px]">PAYMENT METHOD</div>
             <div class="max-w-md bg-stone-100 p-3 rounded-lg border border-stone-300/80 text-xs text-stone-800">
@@ -366,13 +387,13 @@
 let showDimensions = true;
 let invoiceHistory = JSON.parse(localStorage.getItem('addaffodils_history') || '[]');
 
-// Default Package State (Mix of Volumetric & Flat KG Items)
+// Default Package State (Includes Per-Box Delivery Fee Toggle capability)
 let packages = [
-  { desc: 'Box - 1', calcType: 'dim', act: 5.80, l: 31, w: 29, h: 49, chg: 7.00, rate: 4.50 },
-  { desc: 'Box - 2', calcType: 'dim', act: 6.75, l: 31, w: 29, h: 49, chg: 7.00, rate: 4.50 },
-  { desc: 'Box - 3', calcType: 'dim', act: 5.90, l: 31, w: 29, h: 49, chg: 7.00, rate: 4.50 },
-  { desc: 'Box - 4', calcType: 'flat', act: 10.40, l: 0, w: 0, h: 0, chg: 10.40, rate: 4.50 },
-  { desc: 'Box - 5', calcType: 'flat', act: 5.70, l: 0, w: 0, h: 0, chg: 5.70, rate: 4.50 }
+  { desc: 'Box - 1', calcType: 'dim', act: 5.80, l: 31, w: 29, h: 49, chg: 7.00, rate: 4.50, hasDelFee: false, delFee: 5.00 },
+  { desc: 'Box - 2', calcType: 'dim', act: 6.75, l: 31, w: 29, h: 49, chg: 7.00, rate: 4.50, hasDelFee: false, delFee: 5.00 },
+  { desc: 'Box - 3', calcType: 'dim', act: 5.90, l: 31, w: 29, h: 49, chg: 7.00, rate: 4.50, hasDelFee: false, delFee: 5.00 },
+  { desc: 'Box - 4', calcType: 'flat', act: 10.40, l: 0, w: 0, h: 0, chg: 10.40, rate: 4.50, hasDelFee: false, delFee: 5.00 },
+  { desc: 'Box - 5', calcType: 'flat', act: 5.70, l: 0, w: 0, h: 0, chg: 5.70, rate: 4.50, hasDelFee: false, delFee: 5.00 }
 ];
 
 // IndexedDB Helper for Large Permanent Logo Storage
@@ -440,7 +461,6 @@ async function init() {
   updateInvoice();
 }
 
-// INVOICE NUMBER AUTO-INCREMENT & HISTORY Persistence
 function loadSavedInvoiceNumber() {
   const savedInv = localStorage.getItem('addaffodils_last_inv_no');
   if (savedInv) {
@@ -568,15 +588,16 @@ function renderPackageInputs() {
 
   packages.forEach((pkg, index) => {
     const volWt = pkg.calcType === 'dim' ? ((pkg.l * pkg.w * pkg.h) / divVal).toFixed(2) : '0.00';
-    const totalPrice = (pkg.chg * (pkg.rate || 0)).toFixed(2);
+    const weightPrice = pkg.chg * (pkg.rate || 0);
+    const boxDelFeeVal = pkg.hasDelFee ? (pkg.delFee || 0) : 0;
+    const itemTotalPrice = (weightPrice + boxDelFeeVal).toFixed(2);
 
     const div = document.createElement('div');
     div.className = 'bg-slate-900 p-2.5 rounded-xl border border-slate-700/80 space-y-2 text-xs shadow-sm';
     div.innerHTML = `
       <div class="flex items-center justify-between gap-2">
-        <input type="text" value="${pkg.desc}" oninput="updatePkgField(${index}, 'desc', this.value)" class="bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-slate-100 font-semibold w-24 focus:outline-none focus:border-amber-500">
+        <input type="text" value="${pkg.desc}" oninput="updatePkgField(${index}, 'desc', this.value)" class="bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-slate-100 font-semibold flex-1 focus:outline-none focus:border-amber-500">
         
-        <!-- Calculation Basis Switcher -->
         <select onchange="updatePkgField(${index}, 'calcType', this.value)" class="bg-slate-800 border border-slate-700 rounded text-amber-300 font-semibold text-[11px] px-1.5 py-1 focus:outline-none focus:border-amber-500">
           <option value="dim" ${pkg.calcType === 'dim' ? 'selected' : ''}>Dim (L×W×H)</option>
           <option value="flat" ${pkg.calcType === 'flat' ? 'selected' : ''}>Flat KG Only</option>
@@ -603,21 +624,30 @@ function renderPackageInputs() {
         <div class="text-[10px] text-amber-400/90 font-mono">Vol: ${volWt} kg</div>
       </div>
 
-      <!-- Rate, Charge Weight Stepper & Total Price -->
-      <div class="flex items-center justify-between gap-1 pt-1.5 border-t border-slate-800/80 text-[11px]">
+      <!-- Rate, Charge Weight & Per-Box Delivery Fee Controls -->
+      <div class="flex flex-wrap items-center justify-between gap-1.5 pt-1.5 border-t border-slate-800/80 text-[11px]">
         <div class="flex items-center gap-1">
           <span class="text-slate-400">Rate: £</span>
-          <input type="number" step="0.1" value="${pkg.rate || 0}" oninput="updatePkgField(${index}, 'rate', parseFloat(this.value)||0)" class="bg-slate-800 border border-slate-700 rounded w-14 text-center text-emerald-300 font-bold py-0.5 focus:outline-none focus:border-amber-500">
+          <input type="number" step="0.1" value="${pkg.rate || 0}" oninput="updatePkgField(${index}, 'rate', parseFloat(this.value)||0)" class="bg-slate-800 border border-slate-700 rounded w-12 text-center text-emerald-300 font-bold py-0.5 focus:outline-none focus:border-amber-500">
         </div>
 
         <div class="flex items-center gap-1">
           <span class="text-slate-400 font-medium text-[11px]">Chg:</span>
-          <button onclick="adjustChg(${index}, -0.1)" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-2 py-0.5 rounded border border-slate-700 font-bold text-xs active:scale-95 transition">-</button>
-          <input type="number" step="0.1" value="${pkg.chg.toFixed(2)}" oninput="updateChgDirect(${index}, this.value)" class="bg-slate-800 border border-slate-700 rounded w-16 text-center text-amber-300 font-bold py-0.5 focus:outline-none focus:border-amber-500">
-          <button onclick="adjustChg(${index}, 0.1)" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-2 py-0.5 rounded border border-slate-700 font-bold text-xs active:scale-95 transition">+</button>
+          <button onclick="adjustChg(${index}, -0.1)" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-1.5 py-0.5 rounded border border-slate-700 font-bold text-xs active:scale-95 transition">-</button>
+          <input type="number" step="0.1" value="${pkg.chg.toFixed(2)}" oninput="updateChgDirect(${index}, this.value)" class="bg-slate-800 border border-slate-700 rounded w-12 text-center text-amber-300 font-bold py-0.5 focus:outline-none focus:border-amber-500">
+          <button onclick="adjustChg(${index}, 0.1)" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-1.5 py-0.5 rounded border border-slate-700 font-bold text-xs active:scale-95 transition">+</button>
         </div>
 
-        <div class="text-emerald-400 font-extrabold text-xs">£ ${totalPrice}</div>
+        <!-- Per-Box Individual Delivery Fee Toggle -->
+        <div class="flex items-center gap-1 bg-slate-800/90 px-1.5 py-0.5 rounded border border-slate-700">
+          <label class="inline-flex items-center cursor-pointer text-[10px] text-slate-300">
+            <input type="checkbox" ${pkg.hasDelFee ? 'checked' : ''} onchange="updatePkgField(${index}, 'hasDelFee', this.checked)" class="accent-amber-500">
+            <span class="ml-1">Del Fee: £</span>
+          </label>
+          <input type="number" step="0.5" value="${pkg.delFee || 0}" ${pkg.hasDelFee ? '' : 'disabled'} oninput="updatePkgField(${index}, 'delFee', parseFloat(this.value)||0)" class="bg-slate-900 border border-slate-700 rounded w-11 text-center text-amber-300 font-bold py-0.5 disabled:opacity-40">
+        </div>
+
+        <div class="text-emerald-400 font-extrabold text-xs">£ ${itemTotalPrice}</div>
       </div>
     `;
     container.appendChild(div);
@@ -647,7 +677,19 @@ function adjustChg(index, delta) {
 }
 
 function addPackage() {
-  packages.push({ desc: `Box - ${packages.length + 1}`, calcType: 'dim', act: 5.00, l: 30, w: 30, h: 30, chg: 5.00, rate: 4.50 });
+  packages.push({ 
+    desc: `Box - ${packages.length + 1}`, 
+    calcType: 'dim', 
+    act: 5.00, 
+    l: 30, 
+    w: 30, 
+    h: 30, 
+    chg: 5.00, 
+    rate: 4.50,
+    hasDelFee: false,
+    delFee: 5.00
+  });
+  
   renderPackageInputs();
   updateInvoice();
 }
@@ -690,20 +732,28 @@ function updateInvoice() {
 
   let totalAct = 0;
   let totalChg = 0;
-  let grandTotalPrice = 0;
+  let itemsTotalPrice = 0;
 
   packages.forEach(pkg => {
     totalAct += pkg.act;
     totalChg += pkg.chg;
-    const itemTotalPrice = pkg.chg * (pkg.rate || 0);
-    grandTotalPrice += itemTotalPrice;
+    
+    const weightPrice = pkg.chg * (pkg.rate || 0);
+    const boxDelFeeVal = pkg.hasDelFee ? (pkg.delFee || 0) : 0;
+    const itemTotalPrice = weightPrice + boxDelFeeVal;
+    itemsTotalPrice += itemTotalPrice;
 
     const tr = document.createElement('tr');
     tr.className = 'table-row';
     const dimDisplay = pkg.calcType === 'dim' ? `${pkg.l} x ${pkg.w} x ${pkg.h}` : 'N/A (Flat KG)';
-    
+
+    let descHtml = `<div class="font-semibold text-stone-900">${pkg.desc}</div>`;
+    if (pkg.hasDelFee && pkg.delFee > 0) {
+      descHtml += `<div class="text-[10px] text-amber-700 font-bold">+ Box Delivery Fee (£ ${pkg.delFee.toFixed(2)})</div>`;
+    }
+
     tr.innerHTML = `
-      <td class="p-2 font-semibold text-stone-900">${pkg.desc}</td>
+      <td class="p-2">${descHtml}</td>
       <td class="p-2 text-center">${pkg.act.toFixed(2)} kg</td>
       <td class="p-2 text-center dim-col text-stone-600" style="${showDimensions ? '' : 'display:none;'}">${dimDisplay}</td>
       <td class="p-2 text-center font-bold text-stone-900">${pkg.chg.toFixed(2)} kg</td>
@@ -713,10 +763,24 @@ function updateInvoice() {
     tbody.appendChild(tr);
   });
 
+  // Handle Overall Local Delivery Fee
+  const isSingleDelFeeEnabled = document.getElementById('singleDelFeeToggle').checked;
+  const singleDelFeeAmount = isSingleDelFeeEnabled ? (parseFloat(document.getElementById('singleDelFeeInput').value) || 0) : 0;
+  const delFeeRow = document.getElementById('deliveryFeeRow');
+
+  if (isSingleDelFeeEnabled) {
+    delFeeRow.classList.remove('hidden');
+    document.getElementById('viewDeliveryFeeAmount').innerText = `£ ${singleDelFeeAmount.toFixed(2)}`;
+  } else {
+    delFeeRow.classList.add('hidden');
+  }
+
+  const grandTotal = itemsTotalPrice + singleDelFeeAmount;
+
   document.getElementById('viewTotalPkg').innerText = `TOTAL (${packages.length} Packages)`;
   document.getElementById('viewTotalAct').innerText = `${totalAct.toFixed(2)} kg`;
   document.getElementById('viewTotalChg').innerText = `${totalChg.toFixed(2)} kg`;
-  document.getElementById('viewTotalPrice').innerText = `£ ${grandTotalPrice.toFixed(2)}`;
+  document.getElementById('viewTotalPrice').innerText = `£ ${grandTotal.toFixed(2)}`;
 }
 
 // Export HD JPG & Save History
